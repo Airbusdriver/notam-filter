@@ -19,12 +19,13 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 
 ## 사용법
 - **PDF 열기**: NOTAM 패키지가 포함된 OFP PDF 한 개, 또는 OFP와 NOTAM PDF를 함께 선택
-- 탭: 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / **항로 대조** / **INIT** / **FUEL & LOAD**
+- 탭: 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / **항로 대조** / **MEL/CDL** / **INIT** / **FUEL & LOAD**
 - **항로 대조**: OFP의 company route(`RKSI..NOPIK Y697 … DEBH2B EDDF`)와 ATS FPL 15항을 지점·항로 단위로 비교
   - 좌표 표기 통일(39N160E = N39E160), ARINC 6자 약식 절차명(DEBH2B = DEBHI2B)은 '일치(약식 표기)'
   - FPL에만 있는 지점이라도 앞뒤가 같은 항로(W28 KEVOB W28)이면 step climb·descent 지점으로 보고 일치 처리(navlog 순서로 확인)
   - 속도·고도 변경점 표: 미터 고도(S/M)는 METER/FEET CONVERSION TABLE(China/Mongolia) 기준으로 미터와 FL·ft를 함께 표시, navlog 순항 FL과 비교
   - OFP 안 ATS FPL 사본끼리 15항이 다르면 경고
+- **MEL/CDL**: DISPATCH RELEASE INFORMATION의 "MEL / CDL ITEMS" 항목(구분·번호·원문·ATA 장)과 관련 디스패치 노트 표시. OFP가 약 40자에서 자른 설명은 "끝 잘림?" 표시
 - **INIT**: 올린 OFP 머리에서 A350 FMS ACTIVE/INIT 페이지 값을 읽어 같은 배치로 표시
   - FLT NBR · FROM/TO/ALTN(FLIGHT RELEASE·ALTN/xxxx) · CPNY RTE(ROUTE 칸 노선코드) · CRZ FL(navlog 첫 순항 고도, 변경 지점 목록은 참고) · CI(SPEED SKD CRZ-) · TRIP WIND·CRZ TEMP(AVG WIND/TEMP, M=맞바람 HD / P=뒷바람 TL)
   - TROPO: OFP에 값이 없으면 ISA 기본값 36090 FT(점선 칸) · ALTN RTE는 빈칸, OFP 교체 경로(ROUTE TO ALTN)를 옆에 표시
@@ -58,7 +59,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 파일을 고쳐 다시 올린 뒤 `sw.js`의 `VERSION` 값을 바꾸면, 다음 온라인 실행 때 새 버전으로 바뀝니다.
 
 ## 파일
-`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 · `route.js` 항로 대조 · `route-view.js` 항로 대조 화면 · `fuel.js` 연료·무게 파싱 · `fuel-view.js` FUEL & LOAD 화면 · `init.js` INIT 값 파싱 · `init-view.js` INIT 화면 ·
+`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 · `route.js` 항로 대조 · `route-view.js` 항로 대조 화면 · `fuel.js` 연료·무게 파싱 · `fuel-view.js` FUEL & LOAD 화면 · `init.js` INIT 값 파싱 · `init-view.js` INIT 화면 · `mel.js` MEL/CDL 파싱 · `mel-view.js` MEL/CDL 화면 ·
 `pdf.min.mjs`, `pdf.worker.min.mjs` PDF 텍스트 추출(Mozilla pdf.js, Apache-2.0, `PDFJS-LICENSE.txt`) ·
 `sw.js` 오프라인 캐시 · `manifest.webmanifest`, 아이콘
 
