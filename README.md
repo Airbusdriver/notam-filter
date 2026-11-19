@@ -19,7 +19,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 
 ## 사용법
 - **PDF 열기**: NOTAM 패키지가 포함된 OFP PDF 한 개, 또는 OFP와 NOTAM PDF를 함께 선택
-- 탭: 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / **항로 대조** / **MEL/CDL** / **INIT** / **FUEL & LOAD**
+- 탭: 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / **항로 대조** / **MEL/CDL** / **INIT** / **FUEL & LOAD** / **EDTO**(EDTO 비행일 때만)
 - **항로 대조**: OFP의 company route(`RKSI..NOPIK Y697 … DEBH2B EDDF`)와 ATS FPL 15항을 지점·항로 단위로 비교
   - 좌표 표기 통일(39N160E = N39E160), ARINC 6자 약식 절차명(DEBH2B = DEBHI2B)은 '일치(약식 표기)'
   - FPL에만 있는 지점이라도 앞뒤가 같은 항로(W28 KEVOB W28)이면 step climb·descent 지점으로 보고 일치 처리(navlog 순서로 확인)
@@ -36,6 +36,13 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
   - OFP 합계 검증(RESERVE·RQD·PLN TAKEOFF·RAMP·FOD·TOW·LDW·ZFW)과 MZFW·MTOW·PLAN AGTOW·MLDW 여유 표시
   - FMS 초기 셋업용: OFP 계획값만 표시(ZFWCG는 OFP에 없어 빈칸)
   - 참고: REFILE 결심점 필요 연료, CCF, DISC 사유, CI·속도, 예약 승객, 노선 연료 통계
+- **EDTO** (OFP 머리에 EDTO/ETOPS 표시가 있을 때만 나타남)
+  - EDTO 지점: navlog의 EEP·ETP·EXP 좌표(OFP 표기 + Airbus LAT/LONG 입력 형식), ETO(UTC·경과), FL, 누적/잔여 거리, EFOB(R/F), 관련 공항(EEP=Entry, EXP=Exit, ETP=공항 쌍)
+  - 시간축: 비행·EEP–EXP 구간과 교체공항 SUITABLE FROM/TO 시간대, ETP별 회항 도착 예상 표시
+  - ETP 임계연료: EDTO EQUAL TIME POINT DATA 요약·상세에서 CFR·FOB·EXC(여유)·G/C 거리·W/C·결정 시나리오, MOST CRITICAL 표시, 시나리오별(DECOMP 2/1 ENG·PRESS 1 ENG) 연료·시간
+  - 회항 도착 예상 = ETP 통과 예정 + 결정 시나리오 회항시간 → 공항 적합 시간대 안인지 대조
+  - EDTO 교체공항: 적합 시간대, 사용 ETP, 최장 활주로, 회사 무선(NOTAM 패키지), NOTAM 건수
+  - OFP 내부 대조: navlog ↔ ETP LOCATION ↔ 요약 좌표, 통과 시간, FOB ↔ R/F, EXC 계산, ATS FPL RALT ↔ 교체공항 목록
 - 보기: 해석+원문 / 해석 / 원문 (가로 화면에서는 좌우로 나란히 표시)
 - **설정**: 경로 판정 폭(기본 25NM), 시간 여유(통과 전 30분 / 후 120분), 고도 여유(2000ft), 출발시각 변경(지연 시)
 - **화면 모드**: 자동(기기 설정 따름) / 라이트 / 다크 / 야간(적색) — 선택은 기기에 저장됨
@@ -59,7 +66,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 파일을 고쳐 다시 올린 뒤 `sw.js`의 `VERSION` 값을 바꾸면, 다음 온라인 실행 때 새 버전으로 바뀝니다.
 
 ## 파일
-`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 · `route.js` 항로 대조 · `route-view.js` 항로 대조 화면 · `fuel.js` 연료·무게 파싱 · `fuel-view.js` FUEL & LOAD 화면 · `init.js` INIT 값 파싱 · `init-view.js` INIT 화면 · `mel.js` MEL/CDL 파싱 · `mel-view.js` MEL/CDL 화면 ·
+`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 · `route.js` 항로 대조 · `route-view.js` 항로 대조 화면 · `fuel.js` 연료·무게 파싱 · `fuel-view.js` FUEL & LOAD 화면 · `init.js` INIT 값 파싱 · `init-view.js` INIT 화면 · `mel.js` MEL/CDL 파싱 · `mel-view.js` MEL/CDL 화면 · `edto.js` EDTO 파싱 · `edto-view.js` EDTO 화면 ·
 `pdf.min.mjs`, `pdf.worker.min.mjs` PDF 텍스트 추출(Mozilla pdf.js, Apache-2.0, `PDFJS-LICENSE.txt`) ·
 `sw.js` 오프라인 캐시 · `manifest.webmanifest`, 아이콘
 
