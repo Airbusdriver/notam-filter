@@ -1,1 +1,43 @@
-# notam-filter
+# NOTAM 경로 필터 (오프라인 PWA)
+
+OFP PDF를 열면 비행 경로(항로·지점·항행시설·좌표·FIR 통과 시각·고도)를 기준으로
+NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국어 해석을 함께 보여줍니다.
+모든 처리는 기기 안에서 이뤄집니다. OFP는 어디에도 업로드되지 않습니다.
+
+## GitHub Pages에 올리기 (아이패드 Safari)
+1. github.com에 로그인 → 오른쪽 위 **+** → **New repository**
+   - 이름: `notam-filter`, **Public** 선택 → Create repository
+2. 저장소 첫 화면에서 **uploading an existing file** 누르기
+   - 파일 앱에서 zip을 탭해 압축을 풀고, 폴더 안 파일 **전부**를 선택해 올리기 → **Commit changes**
+3. **Settings → Pages**
+   - Source: **Deploy from a branch**, Branch: **main / (root)** → Save
+   - 1~2분 뒤 `https://<GitHub아이디>.github.io/notam-filter/` 주소가 생깁니다
+4. Safari에서 위 주소 열기 → 공유 버튼 → **홈 화면에 추가**
+5. **홈 화면 아이콘으로 한 번 실행**(온라인 상태)해서 캐시를 받아두면, 이후에는 비행기 모드에서도 열립니다.
+
+> 저장소에는 도구 코드만 올라갑니다. OFP·NOTAM 파일은 저장소에 올리지 마세요.
+
+## 사용법
+- **PDF 열기**: NOTAM 패키지가 포함된 OFP PDF 한 개, 또는 OFP와 NOTAM PDF를 함께 선택
+- 탭: 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체
+- 보기: 해석+원문 / 해석 / 원문 (가로 화면에서는 좌우로 나란히 표시)
+- **설정**: 경로 판정 폭(기본 25NM), 시간 여유(통과 전 30분 / 후 120분), 고도 여유(2000ft), 출발시각 변경(지연 시)
+- **야간**: 적색 야간 화면 / **인쇄**: 현재 탭을 인쇄·PDF 저장
+
+## 판정 기준
+| 구분 | 기준 |
+|---|---|
+| 관련 | FPL 항로·navlog 지점·항행시설·SID/STAR·출발/도착/교체 공항이 본문에 있거나, 좌표 구역이 경로에서 판정 폭 이내이고, 통과 시각·고도에 겹침 |
+| 검토 | 위치 특정이 없는 FIR 전반 공지, 같은 항로의 다른 구간, 방향(EB/WB) 불일치, D) 시간표 해석 불가 |
+| 제외 | 좌표가 경로에서 멀리 떨어짐, 경로에 없는 항로·항행시설만 언급, 통과 시각에 비활성, 고도 범위 밖, 회사 COMMENT의 영향노선 목록에 본 노선코드가 없음 |
+
+해석은 규칙 기반(유형별 요약 + 유효기간·운용시간·범위·고도 정리 + 약어 풀이)입니다.
+공식 브리핑을 대신하지 않으므로, 최종 확인은 원문으로 하세요.
+
+## 업데이트할 때
+파일을 고쳐 다시 올린 뒤 `sw.js`의 `VERSION` 값을 바꾸면, 다음 온라인 실행 때 새 버전으로 바뀝니다.
+
+## 파일
+`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 해석 ·
+`pdf.min.mjs`, `pdf.worker.min.mjs` PDF 텍스트 추출(Mozilla pdf.js, Apache-2.0, `PDFJS-LICENSE.txt`) ·
+`sw.js` 오프라인 캐시 · `manifest.webmanifest`, 아이콘

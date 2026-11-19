@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NOTAM 필터">
+<meta name="theme-color" content="#0f1720">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>NOTAM 경로 필터</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#fff; --ink:#15202b; --muted:#5f6b7a; --line:#dde1e6; --soft:#eef1f4;
+  --rel:#0b7a4b; --rel-bg:#e3f4ec; --rev:#9a5b00; --rev-bg:#fdf1dc; --exc:#6b7280; --exc-bg:#eceef1;
+  --acc:#1f5fbf; --ko:#1f5fbf; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0f1720; --panel:#17212b; --ink:#e6ebf0; --muted:#93a0ad; --line:#2a3642; --soft:#1e2a35;
+  --rel:#4cc98f; --rel-bg:#123326; --rev:#f0b34a; --rev-bg:#382a10; --exc:#9aa3ad; --exc-bg:#222c36; --acc:#6ea8ff; --ko:#7fb2ff;
+}}
+html.night{--bg:#000;--panel:#0b0b0b;--ink:#d24a3a;--muted:#8a3a30;--line:#2a1210;--soft:#140806;--rel:#e05a48;--rel-bg:#1c0a08;--rev:#e07a48;--rev-bg:#1c0f08;--exc:#7a3a32;--exc-bg:#120807;--acc:#e05a48;--ko:#ff7a66}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 8px) 16px 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.2px}
+header .sp{flex:1}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer;min-height:36px}
+button.primary,.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button:disabled{opacity:.5}
+input,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-height:36px}
+main{max-width:1280px;margin:0 auto;padding:14px 16px calc(env(safe-area-inset-bottom) + 40px)}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:48px 20px;text-align:center;background:var(--panel)}
+.drop h2{margin:0 0 8px;font-size:20px}
+.drop p{color:var(--muted);margin:6px 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.flt{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:baseline}
+.flt .big{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.flt .kv{color:var(--muted);font-size:13px}.flt .kv b{color:var(--ink);font-weight:600;font-size:15px}
+.firs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:var(--soft);white-space:nowrap}
+.chip b{font-weight:600}
+.route{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:8px;word-break:break-word}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--soft)}
+.seg button{border:0;border-radius:0;background:transparent;padding:7px 12px}
+.seg button.on{background:var(--acc);color:#fff}
+.seg button .n{font-size:11px;opacity:.8;margin-left:4px}
+.grow{flex:1}
+.counts{display:flex;gap:8px;flex-wrap:wrap}
+.count{border-radius:10px;padding:6px 12px;font-weight:600}
+.c-rel{background:var(--rel-bg);color:var(--rel)}.c-rev{background:var(--rev-bg);color:var(--rev)}.c-exc{background:var(--exc-bg);color:var(--exc)}
+.grp{margin:18px 2px 8px;font-size:13px;font-weight:700;color:var(--muted);display:flex;gap:8px;align-items:center}
+.grp .ln{flex:1;height:1px;background:var(--line)}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.card.relevant{border-left-color:var(--rel)}.card.review{border-left-color:var(--rev)}.card.excluded{border-left-color:var(--exc);opacity:.92}
+.ch{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:10px 14px 4px}
+.pill{font-size:12px;font-weight:700;border-radius:6px;padding:1px 8px}
+.p-relevant{background:var(--rel-bg);color:var(--rel)}.p-review{background:var(--rev-bg);color:var(--rev)}.p-excluded{background:var(--exc-bg);color:var(--exc)}
+.nid{font-family:var(--mono);font-weight:700;font-size:15px}
+.cat{font-size:12px;color:var(--muted)}
+.val{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:auto}
+.why{padding:0 14px 6px;display:flex;flex-wrap:wrap;gap:5px}
+.why .chip{background:transparent}
+.why .x{border-color:var(--exc);color:var(--exc)}
+.why .nt{border-color:var(--rev);color:var(--rev)}
+.body{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--line)}
+@media (min-width:900px){.body.both{grid-template-columns:1fr 1fr}.body.both .orig{border-left:1px solid var(--line);border-top:0}}
+.ko-pane{padding:10px 14px}
+.ko-pane ul{margin:0 0 6px;padding-left:18px}
+.ko-pane li{margin:2px 0;font-weight:600}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:13px;margin-top:6px}
+.meta dt{color:var(--muted);white-space:nowrap}.meta dd{margin:0;white-space:pre-line}
+details.gl{margin-top:8px;font-size:13px}
+details.gl summary{color:var(--acc);cursor:pointer}
+.gloss{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;line-height:1.75;margin-top:6px;background:var(--soft);border-radius:8px;padding:8px 10px}
+small.ko{font-family:-apple-system,"Apple SD Gothic Neo",sans-serif;font-size:10.5px;color:var(--ko);margin:0 3px 0 1px;vertical-align:1px}
+.orig{border-top:1px solid var(--line);padding:10px 14px;background:var(--soft)}
+.orig .lbl,.ko-pane .lbl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-bottom:4px}
+.orig pre{margin:0;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
+.card.compact .body{display:none}
+.card.compact .ch{cursor:pointer}
+.empty{color:var(--muted);text-align:center;padding:30px}
+.warn{background:var(--rev-bg);color:var(--rev);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:13px}
+.note{color:var(--muted);font-size:12.5px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);max-width:520px;width:92vw;padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+.frm{display:grid;grid-template-columns:1fr auto;gap:10px 12px;align-items:center}
+.frm label{font-size:14px}.frm .h{grid-column:1/-1;color:var(--muted);font-size:12px;margin-top:-6px}
+.prog{height:4px;background:var(--soft);border-radius:4px;overflow:hidden;margin-top:12px}.prog i{display:block;height:100%;background:var(--acc);width:0}
+.off{font-size:11px;color:var(--muted)}
+@media print{
+  header,.toolbar,.noprint,details.gl summary{display:none!important}
+  body{background:#fff;color:#000;font-size:11px}
+  .card{break-inside:avoid;border-color:#999}
+  .card.compact .body{display:grid}
+  details.gl{display:block}details.gl>*{display:block}
+  .body.both{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>NOTAM 경로 필터</h1>
+  <span class="off" id="offline"></span>
+  <span class="sp"></span>
+  <button id="btnOpen" class="primary">PDF 열기</button>
+  <button id="btnSettings">설정</button>
+  <button id="btnNight" title="야간 모드(적색)">야간</button>
+  <button id="btnPrint">인쇄</button>
+</header>
+<input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
+<main id="main">
+  <div class="drop" id="drop">
+    <h2>OFP PDF를 선택하세요</h2>
+    <p>NOTAM 패키지가 들어 있는 브리핑 PDF 한 개, 또는 OFP와 NOTAM PDF를 함께 선택할 수 있습니다.</p>
+    <p>모든 처리는 이 기기 안에서만 이뤄지며, 파일은 어디에도 업로드되지 않습니다.</p>
+    <p style="margin-top:18px"><button class="primary" onclick="document.getElementById('file').click()">PDF 선택</button>
+    <button id="btnLast" hidden>마지막 OFP 다시 열기</button></p>
+    <div class="prog" id="prog" hidden><i></i></div>
+    <p class="note" id="status"></p>
+  </div>
+  <div id="result" hidden></div>
+</main>
+
+<dialog id="dlg">
+  <h3 style="margin-top:0">필터 설정</h3>
+  <div class="frm">
+    <label for="sBuf">경로 좌우 판정 폭 (NM)</label><input id="sBuf" type="number" min="0" max="200" step="5" style="width:90px">
+    <div class="h">좌표가 있는 구역·지점이 이 거리 안에 들면 경로 관련으로 봅니다.</div>
+    <label for="sBefore">시간 여유: 통과 전 (분)</label><input id="sBefore" type="number" min="0" max="600" step="15" style="width:90px">
+    <label for="sAfter">시간 여유: 통과 후 / 지연 (분)</label><input id="sAfter" type="number" min="0" max="720" step="15" style="width:90px">
+    <div class="h">예정 통과 시각 앞뒤로 이만큼 넓혀서 NOTAM 활성 여부를 봅니다.</div>
+    <label for="sAlt">고도 여유 (ft)</label><input id="sAlt" type="number" min="0" max="10000" step="500" style="width:90px">
+    <label for="sEtd">출발시각 변경 (UTC, HHMM)</label><input id="sEtd" type="text" inputmode="numeric" placeholder="OFP 값" style="width:90px">
+    <div class="h">비워두면 OFP의 ETD를 씁니다. 지연 시 실제 이륙 예상 시각을 넣으세요.</div>
+  </div>
+  <p style="text-align:right;margin-bottom:0"><button id="sReset">기본값</button> <button id="sClose" class="primary">적용</button></p>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
