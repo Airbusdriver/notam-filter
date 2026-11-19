@@ -1,12 +1,14 @@
 import * as pdfjs from './pdf.min.mjs';
-import { extractLines, prepare, evaluate, fmtZ, DEFAULTS, CORE_VERSION } from './core.js';
+import { extractLines, prepare, evaluate, fmtZ, DEFAULTS, CORE_VERSION, cleanLines } from './core.js';
+import { compareRoutes } from './route.js';
+import { renderRouteCheck } from './route-view.js';
 import { interpret, CAT_KO, esc, sectKo } from './interp.js';
 import { decodeEN } from './decode.js';
 import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -88,7 +90,10 @@ function parseEtd(ofp) {
 }
 function analyzeAndRender() {
   const t0 = performance.now();
-  if (!state.prep) state.prep = prepare(state.lines); // PDF 파싱은 한 번만
+  if (!state.prep) { // PDF 파싱은 한 번만
+    state.prep = prepare(state.lines);
+    try { state.rc = compareRoutes(cleanLines(state.lines).map(l => l.t), state.prep.ofp); } catch (e) { console.error(e); state.rc = null; }
+  }
   const etdOverride = parseEtd(state.prep.ofp);
   state.R = evaluate(state.prep, etdOverride != null ? { ...settings, etdOverride } : settings);
   state.ms = Math.round(performance.now() - t0);
@@ -99,7 +104,7 @@ function analyzeAndRender() {
 /* ---------- 렌더링 ---------- */
 const STATUS_KO = { relevant: '관련', review: '검토', excluded: '제외' };
 const TABS = [
-  ['route', '경로·FIR'], ['airport', '출발·도착·교체'], ['alt', 'REFILE·ERA'], ['excluded', '제외됨'], ['all', '전체'],
+  ['route', '경로·FIR'], ['airport', '출발·도착·교체'], ['alt', 'REFILE·ERA'], ['excluded', '제외됨'], ['all', '전체'], ['rte', '항로 대조'],
 ];
 function tabOfRaw(n) {
   if (n.sect === 'FIR' || n.sect === 'ENR') return 'route';
@@ -120,6 +125,9 @@ function render() {
   const inTab = n => state.tab === 'all' || state.tab === 'excluded' || tabOf(n) === state.tab || (n.a.status === 'excluded' && tabOfRaw(n) === state.tab);
   notams.filter(inTab).forEach(n => counts[n.a.status]++);
   const tabN = {}; for (const [k] of TABS) tabN[k] = k === 'all' ? notams.length : notams.filter(n => tabOf(n) === k).length;
+  const rc = state.rc, rcBad = rc && rc.counts ? rc.counts.bad : null;
+  tabN.rte = !rc || !rc.coStr || !rc.fplStr ? '?' : rcBad ? `✗${rcBad}` : rc.counts.chk ? `확인${rc.counts.chk}` : '✓';
+  const isRc = state.tab === 'rte';
 
   const fir = Object.entries(ctx.firWin).filter(([k]) => (ofp.eet || []).some(e => e.fir === k) || k === (ofp.pkgFirs || [])[0])
     .sort((a, b) => a[1][0][0] - b[1][0][0]);
@@ -142,17 +150,18 @@ function render() {
     <div class="note" style="margin-top:6px">${esc(state.name)} ·${state.readMs ? ` PDF 읽기 ${(state.readMs / 1000).toFixed(1)}초 ·` : ''} 항법점 ${ofp.wpts.length}개 · 항로 ${ofp.airways.size}개 · NOTAM ${notams.length}건 · 판정 ${state.ms}ms · 판정 폭 ${settings.bufferNM}NM · 시간여유 −${settings.before}/+${settings.after}분</div>
   </div>`;
   h += `<div class="toolbar">
-    <div class="seg" id="tabs">${TABS.map(([k, l]) => `<button data-t="${k}" class="${state.tab === k ? 'on' : ''}">${l}<span class="n">${tabN[k]}</span></button>`).join('')}</div>
-    <div class="counts" title="현재 탭 기준">${state.tab === 'excluded' ? '' : `<span class="count c-rel">관련 ${counts.relevant}</span><span class="count c-rev">검토 ${counts.review}</span>`}<span class="count c-exc">제외 ${counts.excluded}</span></div>
+    <div class="seg" id="tabs">${TABS.map(([k, l]) => `<button data-t="${k}" class="${state.tab === k ? 'on' : ''}${k === 'rte' && rcBad ? ' rc-alert' : ''}">${l}<span class="n">${tabN[k]}</span></button>`).join('')}</div>
+    ${isRc ? '' : `<div class="counts" title="현재 탭 기준">${state.tab === 'excluded' ? '' : `<span class="count c-rel">관련 ${counts.relevant}</span><span class="count c-rev">검토 ${counts.review}</span>`}<span class="count c-exc">제외 ${counts.excluded}</span></div>
     <span class="grow"></span>
     <input id="q" type="search" placeholder="검색 (ID·지점·단어)" value="${esc(state.q)}" style="width:190px">
-    <div class="seg" id="view">${[['both', '해석+원문'], ['ko', '해석'], ['raw', '원문']].map(([k, l]) => `<button data-v="${k}" class="${state.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="seg" id="view">${[['both', '해석+원문'], ['ko', '해석'], ['raw', '원문']].map(([k, l]) => `<button data-v="${k}" class="${state.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`}
   </div>`;
-  h += `<div id="list">${renderList()}</div>`;
+  h += isRc ? `<div id="rc">${renderRouteCheck(rc)}</div>` : `<div id="list">${renderList()}</div>`;
   h += `<p class="note noprint" style="margin-top:20px">규칙 기반 자동 분류·해석입니다. 공식 브리핑을 대신하지 않으며, '검토'·'제외' 항목도 최종 확인은 원문으로 하세요. · v${APP_VERSION}/${CORE_VERSION}</p>`;
   el.innerHTML = h;
 
   el.querySelector('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.tab = b.dataset.t; render(); };
+  if (isRc) return;
   el.querySelector('#view').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; store.set('nf.view', state.view); render(); };
   const q = el.querySelector('#q');
   q.oninput = () => { state.q = q.value; refreshList(); };

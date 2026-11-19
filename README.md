@@ -19,7 +19,12 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 
 ## 사용법
 - **PDF 열기**: NOTAM 패키지가 포함된 OFP PDF 한 개, 또는 OFP와 NOTAM PDF를 함께 선택
-- 탭: 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체
+- 탭: 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / **항로 대조**
+- **항로 대조**: OFP의 company route(`RKSI..NOPIK Y697 … DEBH2B EDDF`)와 ATS FPL 15항을 지점·항로 단위로 비교
+  - 좌표 표기 통일(39N160E = N39E160), ARINC 6자 약식 절차명(DEBH2B = DEBHI2B)은 '일치(약식 표기)'
+  - FPL에만 있는 지점이라도 앞뒤가 같은 항로(W28 KEVOB W28)이면 step climb·descent 지점으로 보고 일치 처리(navlog 순서로 확인)
+  - 속도·고도 변경점 표: 미터 고도(S/M)는 미터와 FL·ft를 함께 표시(중국 미터 고도표 값은 그 FL), navlog 순항 FL과 비교
+  - OFP 안 ATS FPL 사본끼리 15항이 다르면 경고
 - 보기: 해석+원문 / 해석 / 원문 (가로 화면에서는 좌우로 나란히 표시)
 - **설정**: 경로 판정 폭(기본 25NM), 시간 여유(통과 전 30분 / 후 120분), 고도 여유(2000ft), 출발시각 변경(지연 시)
 - **화면 모드**: 자동(기기 설정 따름) / 라이트 / 다크 / 야간(적색) — 선택은 기기에 저장됨
@@ -43,7 +48,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 파일을 고쳐 다시 올린 뒤 `sw.js`의 `VERSION` 값을 바꾸면, 다음 온라인 실행 때 새 버전으로 바뀝니다.
 
 ## 파일
-`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 ·
+`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 · `route.js` 항로 대조 · `route-view.js` 항로 대조 화면 ·
 `pdf.min.mjs`, `pdf.worker.min.mjs` PDF 텍스트 추출(Mozilla pdf.js, Apache-2.0, `PDFJS-LICENSE.txt`) ·
 `sw.js` 오프라인 캐시 · `manifest.webmanifest`, 아이콘
 
