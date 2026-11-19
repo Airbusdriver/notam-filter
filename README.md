@@ -24,6 +24,10 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 - **설정**: 경로 판정 폭(기본 25NM), 시간 여유(통과 전 30분 / 후 120분), 고도 여유(2000ft), 출발시각 변경(지연 시)
 - **화면 모드**: 자동(기기 설정 따름) / 라이트 / 다크 / 야간(적색) — 선택은 기기에 저장됨
 - **인쇄**: 현재 탭을 인쇄·PDF 저장
+- **영문 디코딩**: 카드마다 원문 약어를 ICAO Doc 8400·FAA 약어 기준으로 풀어쓴 영어(풀린 단어는 파란색). 오프라인 동작
+- **AI 번역 (선택, 온라인)**: 설정에 Anthropic API 키를 넣고 출발 전 'AI 번역'을 누르면 현재 탭의 NOTAM(제외 항목 빼고)을
+  자연스러운 한국어로 번역해 기기에 저장 → 비행 중 오프라인에서도 표시. 카드별 'AI 번역' 버튼으로 한 건씩도 가능.
+  키는 console.anthropic.com에서 발급(Claude 구독과 별도 과금)하며 이 기기에만 저장됩니다.
 
 ## 판정 기준
 | 구분 | 기준 |
@@ -39,6 +43,6 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 파일을 고쳐 다시 올린 뒤 `sw.js`의 `VERSION` 값을 바꾸면, 다음 온라인 실행 때 새 버전으로 바뀝니다.
 
 ## 파일
-`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 해석 ·
+`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `ai.js` AI 번역 ·
 `pdf.min.mjs`, `pdf.worker.min.mjs` PDF 텍스트 추출(Mozilla pdf.js, Apache-2.0, `PDFJS-LICENSE.txt`) ·
 `sw.js` 오프라인 캐시 · `manifest.webmanifest`, 아이콘

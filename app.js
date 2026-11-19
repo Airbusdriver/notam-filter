@@ -1,9 +1,11 @@
 import * as pdfjs from './pdf.min.mjs';
 import { extractLines, prepare, evaluate, fmtZ, DEFAULTS, CORE_VERSION } from './core.js';
 import { interpret, CAT_KO, esc, sectKo } from './interp.js';
+import { decodeEN } from './decode.js';
+import { AI_MODELS, aiCache, translateAll } from './ai.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -12,7 +14,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
 };
 let settings = { ...DEFAULTS, ...store.get('nf.settings', {}) };
-let state = { lines: null, prep: null, name: '', R: null, tab: 'route', view: store.get('nf.view', 'both'), q: '', open: new Set() };
+let state = { decOpen: store.get('nf.decOpen', true), lines: null, prep: null, name: '', R: null, tab: 'route', view: store.get('nf.view', 'both'), q: '', open: new Set() };
 
 /* ---------- 오프라인 / 서비스워커 ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -142,6 +144,7 @@ function render() {
     <div class="counts" title="현재 탭 기준">${state.tab === 'excluded' ? '' : `<span class="count c-rel">관련 ${counts.relevant}</span><span class="count c-rev">검토 ${counts.review}</span>`}<span class="count c-exc">제외 ${counts.excluded}</span></div>
     <span class="grow"></span>
     <input id="q" type="search" placeholder="검색 (ID·지점·단어)" value="${esc(state.q)}" style="width:190px">
+    <button id="btnAI" class="noprint">${aiLabel()}</button>
     <div class="seg" id="view">${[['both', '해석+원문'], ['ko', '해석'], ['raw', '원문']].map(([k, l]) => `<button data-v="${k}" class="${state.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
   </div>`;
   h += `<div id="list">${renderList()}</div>`;
@@ -149,24 +152,33 @@ function render() {
   el.innerHTML = h;
 
   el.querySelector('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.tab = b.dataset.t; render(); };
+  el.querySelector('#btnAI').onclick = () => runAI(currentList().filter(n => state.tab === 'excluded' || n.a.status !== 'excluded'));
   el.querySelector('#view').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; store.set('nf.view', state.view); render(); };
   const q = el.querySelector('#q');
-  q.oninput = () => { state.q = q.value; $('#list').innerHTML = renderList(); bindCards(); };
+  q.oninput = () => { state.q = q.value; refreshList(); };
   bindCards();
 }
 
+function refreshList() { $('#list').innerHTML = renderList(); bindCards(); const b = $('#btnAI'); if (b && !ai.running) b.textContent = aiLabel(); }
 function bindCards() {
+  document.querySelectorAll('[data-ai]').forEach(b => b.onclick = e => {
+    e.stopPropagation(); const n = state.R.notams.find(x => x.key === b.dataset.ai); if (n) runAI([n]);
+  });
   document.querySelectorAll('.card.compact .ch, .card .ch[data-k]').forEach(ch => ch.onclick = () => {
     const k = ch.dataset.k; if (state.open.has(k)) state.open.delete(k); else state.open.add(k);
     const card = ch.closest('.card'); card.classList.toggle('compact', !state.open.has(k) && card.dataset.cmp === '1');
   });
 }
 
-function renderList() {
-  const { notams, ctx } = state.R;
+function currentList() {
   const q = state.q.trim().toUpperCase();
-  let list = notams.filter(n => state.tab === 'all' || tabOf(n) === state.tab);
+  let list = state.R.notams.filter(n => state.tab === 'all' || tabOf(n) === state.tab);
   if (q) list = list.filter(n => (n.id + ' ' + n.loc + ' ' + n.raw + ' ' + n.a.reasons.join(' ')).toUpperCase().includes(q));
+  return list;
+}
+function renderList() {
+  const { ctx } = state.R;
+  let list = currentList();
   if (!list.length) return `<div class="empty">해당 항목이 없습니다.</div>`;
 
   // 그룹: 경로 탭은 비행 순서(FIR), 공항 탭은 공항별
@@ -209,10 +221,15 @@ function card(n, compactDefault) {
     ...a.excl.map(r => `<span class="chip x">${esc(r)}</span>`),
     ...a.notes.map(r => `<span class="chip nt">${esc(r)}</span>`),
   ].join('');
-  const ko = `<div class="ko-pane"><div class="lbl">해석</div>
-    <ul>${I.summary.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+  const tr = aiCache.get(n);
+  if (!n._D) n._D = decodeBlock(n);
+  const modelName = tr ? (AI_MODELS.find(m => m[0] === tr.model)?.[1].split(' (')[0] || tr.model) : '';
+  const ko = `<div class="ko-pane">
+    ${tr ? `<div class="lbl">AI 번역 · ${esc(modelName)}</div><div class="aitr">${esc(tr.ko)}</div>`
+         : `<div class="lbl">해석 (자동 요약)${settings.aiKey ? ` <button class="mini noprint" data-ai="${esc(n.key)}">AI 번역</button>` : ''}</div>
+    <ul>${I.summary.map(s => `<li>${esc(s)}</li>`).join('')}</ul>`}
     <dl class="meta">${I.meta.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-    <details class="gl"><summary>약어 풀이 원문 보기</summary><div class="gloss">${I.gloss}${I.comment ? `\n\nCOMMENT) ${I.comment}` : ''}</div></details>
+    <details class="gl" ${state.decOpen ? 'open' : ''}><summary>영문 디코딩 (ICAO·FAA 약어 풀이)</summary><div class="gloss">${n._D}</div></details>
   </div>`;
   const raw = `<div class="orig"><div class="lbl">원문</div><pre>${esc(`${n.startTxt} - ${n.endTxt}${n.est ? ' EST' : ''}  ${n.loc} ${n.id}\n${n.raw}`)}</pre></div>`;
   const body = state.view === 'ko' ? ko : state.view === 'raw' ? raw : ko + raw;
@@ -224,19 +241,63 @@ function card(n, compactDefault) {
   </article>`;
 }
 
+function decodeBlock(n) {
+  const parts = [];
+  if (n.D) parts.push(`<span class="dl">SCHEDULE</span> ${decodeEN(n.D).html}`);
+  parts.push(decodeEN(n.E || n.raw).html);
+  if (n.F || n.G) parts.push(`<span class="dl">LIMITS</span> ${decodeEN(`${n.F || ''} - ${n.G || ''}`).html}`);
+  if (n.comment) parts.push(`<span class="dl">COMMENT</span> ${decodeEN(n.comment).html}`);
+  return parts.join('\n\n');
+}
+
+/* ---------- AI 번역 (온라인) ---------- */
+const ai = { running: false, ctrl: null };
+function aiLabel() {
+  if (!state.R) return 'AI 번역';
+  const list = currentList().filter(n => state.tab === 'excluded' || n.a.status !== 'excluded');
+  const left = list.filter(n => !aiCache.get(n)).length;
+  return left ? `AI 번역 (${left}건)` : 'AI 번역 완료';
+}
+async function runAI(list) {
+  const btn = $('#btnAI');
+  if (ai.running) { ai.ctrl?.abort(); return; }
+  if (!settings.aiKey) { openSettings(); setTimeout(() => $('#sKey').focus(), 50); return; }
+  if (!navigator.onLine) { alert('AI 번역은 인터넷 연결이 필요합니다. 이미 번역한 항목은 오프라인에서도 보입니다.'); return; }
+  const todo = list.filter(n => !aiCache.get(n));
+  if (!todo.length) return;
+  ai.running = true; ai.ctrl = new AbortController();
+  const r = await translateAll(todo, {
+    key: settings.aiKey, model: settings.aiModel || AI_MODELS[0][0], signal: ai.ctrl.signal,
+    onProgress: (d, t) => { if (btn) btn.textContent = `AI 번역 중 ${d}/${t} · 누르면 중지`; refreshListKeepScroll(); },
+  });
+  ai.running = false;
+  refreshListKeepScroll();
+  if (btn) btn.textContent = aiLabel();
+  if (r.error) alert(`AI 번역 중 오류: ${r.error.message}${r.failed ? `\n번역 못 한 항목 ${r.failed}건` : ''}`);
+}
+function refreshListKeepScroll() { const y = scrollY; refreshList(); scrollTo(0, y); }
+
 /* ---------- 설정 ---------- */
 const dlg = $('#dlg');
-$('#btnSettings').onclick = () => {
+$('#sModel').innerHTML = AI_MODELS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+function openSettings() {
   $('#sBuf').value = settings.bufferNM; $('#sBefore').value = settings.before; $('#sAfter').value = settings.after;
   $('#sAlt').value = settings.altMargin; $('#sEtd').value = settings.etdHHMM || '';
+  $('#sKey').value = settings.aiKey || ''; $('#sModel').value = settings.aiModel || AI_MODELS[0][0];
+  $('#sDec').checked = !!state.decOpen;
+  $('#aiCount').textContent = `저장된 AI 번역 ${aiCache.count()}건`;
   dlg.showModal();
-};
-$('#sReset').onclick = () => { settings = { ...DEFAULTS }; store.set('nf.settings', settings); dlg.close(); if (state.lines) analyzeAndRender(); };
+}
+$('#btnSettings').onclick = openSettings;
+$('#sClearAI').onclick = () => { if (confirm('이 기기에 저장된 AI 번역을 모두 지울까요?')) { aiCache.clear(); $('#aiCount').textContent = '저장된 AI 번역 0건'; if (state.R) refreshList(); } };
+$('#sReset').onclick = () => { settings = { ...DEFAULTS, aiKey: settings.aiKey, aiModel: settings.aiModel }; store.set('nf.settings', settings); dlg.close(); if (state.lines) analyzeAndRender(); };
 $('#sClose').onclick = () => {
   const num = (id, d) => { const v = parseFloat($(id).value); return isFinite(v) && v >= 0 ? v : d; };
   settings.bufferNM = num('#sBuf', DEFAULTS.bufferNM); settings.before = num('#sBefore', DEFAULTS.before);
   settings.after = num('#sAfter', DEFAULTS.after); settings.altMargin = num('#sAlt', DEFAULTS.altMargin);
   const e = $('#sEtd').value.replace(/[^0-9]/g, ''); settings.etdHHMM = /^\d{4}$/.test(e) ? e : '';
+  settings.aiKey = $('#sKey').value.trim(); settings.aiModel = $('#sModel').value;
+  state.decOpen = $('#sDec').checked; store.set('nf.decOpen', state.decOpen);
   const { etdHHMM, ...persist } = settings; store.set('nf.settings', persist); // 출발시각 변경은 이번 비행에만
   dlg.close(); if (state.lines) analyzeAndRender();
 };

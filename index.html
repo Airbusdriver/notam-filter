@@ -83,6 +83,11 @@ details.gl{margin-top:8px;font-size:13px}
 details.gl summary{color:var(--acc);cursor:pointer}
 .gloss{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;line-height:1.75;margin-top:6px;background:var(--soft);border-radius:8px;padding:8px 10px}
 small.ko{font-family:-apple-system,"Apple SD Gothic Neo",sans-serif;font-size:10.5px;color:var(--ko);margin:0 3px 0 1px;vertical-align:1px}
+.aitr{white-space:pre-line;font-size:14.5px;line-height:1.6;margin-bottom:6px}
+button.mini{min-height:0;padding:1px 8px;font-size:11px;margin-left:6px;vertical-align:1px}
+b.dx{font-weight:600;color:var(--ko)}
+.dl{font-family:-apple-system,sans-serif;font-size:10.5px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-right:4px}
+dialog{max-height:90vh;overflow:auto}
 .orig{border-top:1px solid var(--line);padding:10px 14px;background:var(--soft)}
 .orig .lbl,.ko-pane .lbl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-bottom:4px}
 .orig pre{margin:0;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
@@ -145,6 +150,18 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
     <label for="sAlt">고도 여유 (ft)</label><input id="sAlt" type="number" min="0" max="10000" step="500" style="width:90px">
     <label for="sEtd">출발시각 변경 (UTC, HHMM)</label><input id="sEtd" type="text" inputmode="numeric" placeholder="OFP 값" style="width:90px">
     <div class="h">비워두면 OFP의 ETD를 씁니다. 지연 시 실제 이륙 예상 시각을 넣으세요.</div>
+  </div>
+  <h3 style="margin:18px 0 8px">표시</h3>
+  <div class="frm">
+    <label for="sDec">영문 디코딩을 펼쳐서 보기</label><input id="sDec" type="checkbox" style="width:22px;height:22px">
+  </div>
+  <h3 style="margin:18px 0 8px">AI 한국어 번역 (온라인, 선택)</h3>
+  <div class="frm">
+    <label for="sKey">Anthropic API 키</label><input id="sKey" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:200px">
+    <div class="h">console.anthropic.com에서 발급(Claude 구독과 별도, 사용량만큼 과금). 키는 이 기기에만 저장되고 api.anthropic.com으로만 전송됩니다.</div>
+    <label for="sModel">모델</label><select id="sModel"></select>
+    <span class="note" id="aiCount"></span><button id="sClearAI" type="button">번역 지우기</button>
+    <div class="h">출발 전 온라인에서 'AI 번역'을 누르면 번역이 기기에 저장되어 비행 중 오프라인에서도 보입니다.</div>
   </div>
   <p style="text-align:right;margin-bottom:0"><button id="sReset">기본값</button> <button id="sClose" class="primary">적용</button></p>
 </dialog>
