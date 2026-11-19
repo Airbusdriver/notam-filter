@@ -119,7 +119,9 @@ export function fmsPage(fu, ofp = {}, ov = {}, ctx = {}) {
   const rsv = fu.cont?.f ?? 0, altn = fu.altn?.f ?? 0, fin = fu.final?.f ?? 0;
   const extra = block != null ? block - taxi - trip - rsv - altn - fin : null;
   const lw = tow != null ? tow - trip : null;
-  const efobDest = block != null ? block - taxi - trip : null;
+  // EFOB DEST = OFP FOD, EFOB ALTN = FOD − ALTN FUEL (계산값 BLOCK − TAXI − TRIP과 대조는 checkFuel)
+  const efobCalc = block != null ? block - taxi - trip : null;
+  const efobDest = fu.fod?.f ?? efobCalc;
   const efobAltn = efobDest != null ? efobDest - altn : null;
   const tripMin = fu.trip?.t;
   const extraMin = fu.disc && fu.tank ? (fu.disc.t ?? 0) + (fu.tank.t ?? 0) : fu.disc?.t ?? null;
@@ -129,7 +131,7 @@ export function fmsPage(fu, ofp = {}, ov = {}, ctx = {}) {
     ci: fu.ci, pax: ov.pax ?? fu.pax?.total ?? null, cg: ov.cg ?? null,
     tow, lw, gw: zfw != null && block != null ? zfw + block : null,
     extra, extraMin: extra === (fu.disc?.f ?? 0) + (fu.tank?.f ?? 0) ? extraMin : null,
-    minDest: altn + fin, efobDest, efobAltn,
+    minDest: altn + fin, efobDest, efobAltn, efobCalc,
     destUtc: ETA, altnUtc: ETA != null && fu.altn?.t != null ? ETA + fu.altn.t * 60000 : null,
     dest: ofp.dest, altnIcao: fu.altn?.icao || ofp.altn,
     overridden: ov.zfw != null || ov.block != null,
@@ -145,6 +147,7 @@ export function checkFuel(fu, P) {
   add('PLN TAKEOFF', f('plnTo'), f('rqd') + (f('disc') ?? 0) + (f('tank') ?? 0), 'RQD + DISC + TANKERING');
   add('RAMP(BLOCK)', f('ramp'), f('plnTo') + f('taxi'), 'PLN TAKEOFF + TAXI');
   add('FOD', f('fod'), f('plnTo') - f('trip'), 'PLN TAKEOFF − TRIP');
+  add('EFOB DEST', f('fod'), P.efobCalc, 'OFP FOD ↔ BLOCK − TAXI − TRIP');
   add('TOF', w.tof, f('plnTo'), 'PLN TAKEOFF');
   add('TOW', w.tow, w.zfw != null && w.tof != null ? w.zfw + w.tof : null, 'ZFW + TOF');
   add('LDW', w.ldw, w.tow != null && w.tif != null ? w.tow - w.tif : null, 'TOW − TIF');

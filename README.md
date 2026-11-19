@@ -27,6 +27,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
   - OFP 안 ATS FPL 사본끼리 15항이 다르면 경고
 - **FUEL & LOAD**: OFP 연료 요약(TRIP·RESERVE·ALTN·FINAL·CONT·DISC·TAXI·RAMP)과 무게(ZFW·TOW·LDW·제한값)를 읽어 A350 FMS ACTIVE/FUEL&LOAD 페이지 배치로 표시
   - 입력값(파란 사각형): ZFW · ZFWCG · BLOCK · TAXI · RTE RSV · ALTN · FINAL · PAX NBR · CI / 대조값(초록): TRIP · TOW · LW · DEST/ALTN UTC·EFOB · EXTRA
+  - EFOB DEST = OFP FOD, EFOB ALTN = FOD − ALTN FUEL (BLOCK − TAXI − TRIP 계산값과 대조)
   - MIN FUEL AT DEST = ALTN + FINAL, EXTRA = BLOCK − TAXI − TRIP − RTE RSV − ALTN − FINAL (= DISC + TANKERING)
   - OFP 합계 검증(RESERVE·RQD·PLN TAKEOFF·RAMP·FOD·TOW·LDW·ZFW)과 MZFW·MTOW·PLAN AGTOW·MLDW 여유 표시
   - FMS 초기 셋업용: OFP 계획값만 표시(ZFWCG는 OFP에 없어 빈칸)

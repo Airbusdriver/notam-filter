@@ -81,6 +81,6 @@ export function renderFuel(fu, ofp, ctx) {
   h += `<div class="grp">참고 <span class="ln"></span></div><div class="panel"><dl class="meta fu-ref">${ref.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>`;
 
   h += `<details class="panel"><summary class="orig-lbl" style="cursor:pointer">OFP 연료 요약 원문</summary><pre class="rc-src" style="white-space:pre">${esc((fu.head || []).join('\n'))}</pre></details>`;
-  h += `<p class="note">FMS 화면 배치를 흉내 낸 참고값입니다. 입력 전 OFP 원문과 대조하세요. DEST UTC는 OFP ETD(출발시각 변경 설정 반영) + 비행시간입니다.</p>`;
+  h += `<p class="note">FMS 화면 배치를 흉내 낸 참고값입니다. 입력 전 OFP 원문과 대조하세요. EFOB DEST는 OFP FOD, EFOB ALTN은 FOD − ALTN FUEL입니다. DEST UTC는 OFP ETD(출발시각 변경 설정 반영) + 비행시간입니다.</p>`;
   return h;
 }
