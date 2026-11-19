@@ -44,6 +44,6 @@ export function renderInit(it, ofp) {
   if (it.altnRoute) ref.push(['ALTN 경로', `${esc(it.altnRoute)} <span class="note">— FMS 회사 교체 항로가 없으면 ALTN RTE SEL 또는 수동 입력</span>`]);
   h += `<div class="grp">참고 <span class="ln"></span></div><div class="panel"><dl class="meta fu-ref">${ref.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>`;
   if (it.src.head) h += `<details class="panel"><summary class="orig-lbl" style="cursor:pointer">OFP 머리 원문</summary><pre class="rc-src" style="white-space:pre">${esc([it.src.release, it.src.head, it.src.speed].filter(Boolean).join('\n'))}</pre></details>`;
-  h += `<p class="note">FMS 화면 배치를 흉내 낸 참고값입니다. 입력 전 OFP 원문과 대조하세요. CPNY RTE는 OFP 노선코드이며, FMS에 저장된 회사 항로 이름과 같은지 확인하세요.</p>`;
+  h += `<p class="note">FMS 화면 배치를 흉내 낸 참고값입니다. 입력 전 OFP 원문과 대조하세요. CPNY RTE는 OFP 머리표 ROUTE 칸의 노선코드입니다.</p>`;
   return h;
 }
