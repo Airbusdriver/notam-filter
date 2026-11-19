@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NOTAM 필터">
 <meta name="theme-color" content="#0f1720">
+<script>try{var t=JSON.parse(localStorage.getItem('nf.theme')||'null')||(JSON.parse(localStorage.getItem('nf.night')||'false')?'night':'auto');if(t!=='auto')document.documentElement.classList.add(t);}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -18,10 +19,14 @@
   --rel:#0b7a4b; --rel-bg:#e3f4ec; --rev:#9a5b00; --rev-bg:#fdf1dc; --exc:#6b7280; --exc-bg:#eceef1;
   --acc:#1f5fbf; --ko:#1f5fbf; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root{
+@media (prefers-color-scheme: dark){html:not(.light):not(.dark):not(.night){
   --bg:#0f1720; --panel:#17212b; --ink:#e6ebf0; --muted:#93a0ad; --line:#2a3642; --soft:#1e2a35;
   --rel:#4cc98f; --rel-bg:#123326; --rev:#f0b34a; --rev-bg:#382a10; --exc:#9aa3ad; --exc-bg:#222c36; --acc:#6ea8ff; --ko:#7fb2ff;
 }}
+html.dark{
+  --bg:#0f1720; --panel:#17212b; --ink:#e6ebf0; --muted:#93a0ad; --line:#2a3642; --soft:#1e2a35;
+  --rel:#4cc98f; --rel-bg:#123326; --rev:#f0b34a; --rev-bg:#382a10; --exc:#9aa3ad; --exc-bg:#222c36; --acc:#6ea8ff; --ko:#7fb2ff;
+}
 html.night{--bg:#000;--panel:#0b0b0b;--ink:#d24a3a;--muted:#8a3a30;--line:#2a1210;--soft:#140806;--rel:#e05a48;--rel-bg:#1c0a08;--rev:#e07a48;--rev-bg:#1c0f08;--exc:#7a3a32;--exc-bg:#120807;--acc:#e05a48;--ko:#ff7a66}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-text-size-adjust:100%}
@@ -109,7 +114,10 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <span class="sp"></span>
   <button id="btnOpen" class="primary">PDF 열기</button>
   <button id="btnSettings">설정</button>
-  <button id="btnNight" title="야간 모드(적색)">야간</button>
+  <select id="selTheme" title="화면 모드" aria-label="화면 모드">
+    <option value="auto">화면: 자동</option><option value="light">화면: 라이트</option>
+    <option value="dark">화면: 다크</option><option value="night">화면: 야간(적색)</option>
+  </select>
   <button id="btnPrint">인쇄</button>
 </header>
 <input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>

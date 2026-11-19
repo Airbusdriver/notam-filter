@@ -3,7 +3,7 @@ import { extractLines, prepare, evaluate, fmtZ, DEFAULTS, CORE_VERSION } from '.
 import { interpret, CAT_KO, esc, sectKo } from './interp.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -20,7 +20,20 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 }
 const updOnline = () => { if (!navigator.onLine) $('#offline').textContent = '오프라인'; };
 addEventListener('online', updOnline); addEventListener('offline', updOnline); updOnline();
-if (store.get('nf.night', false)) document.documentElement.classList.add('night');
+// 화면 모드: 자동(기기 설정) / 라이트 / 다크 / 야간(적색)
+const THEME_BG = { light: '#f4f5f7', dark: '#0f1720', night: '#000000' };
+function applyTheme(t) {
+  const h = document.documentElement;
+  h.classList.remove('light', 'dark', 'night');
+  if (t !== 'auto') h.classList.add(t);
+  const dark = t === 'dark' || t === 'night' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelector('meta[name="theme-color"]').content = t === 'auto' ? (dark ? THEME_BG.dark : THEME_BG.light) : THEME_BG[t];
+}
+let theme = store.get('nf.theme', store.get('nf.night', false) ? 'night' : 'auto');
+applyTheme(theme);
+$('#selTheme').value = theme;
+$('#selTheme').onchange = e => { theme = e.target.value; store.set('nf.theme', theme); applyTheme(theme); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (theme === 'auto') applyTheme('auto'); });
 
 /* ---------- 파일 열기 ---------- */
 $('#btnOpen').onclick = () => $('#file').click();
@@ -227,5 +240,4 @@ $('#sClose').onclick = () => {
   const { etdHHMM, ...persist } = settings; store.set('nf.settings', persist); // 출발시각 변경은 이번 비행에만
   dlg.close(); if (state.lines) analyzeAndRender();
 };
-$('#btnNight').onclick = () => { const on = document.documentElement.classList.toggle('night'); store.set('nf.night', on); };
 $('#btnPrint').onclick = () => print();
