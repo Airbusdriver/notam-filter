@@ -137,6 +137,9 @@ export function parseOFP(L) {
     const h = T[hi].split(' '), v = (T[hi + 1] || '').split(' ');
     const k = h.indexOf('ROUTE'); if (k >= 0 && v[k]) f.routeCode = v[k];
   }
+  { // CFP PLAN 번호 (예: CFP PLAN 7445)
+    const cp = /^CFP PLAN\s+(\S+)/m.exec(all); if (cp) f.cfpPlan = cp[1];
+  }
   // 도시쌍 (ICN/FRA)
   m = /\b(?:OZ|KE|AAR|KAL)\s?\d+\s*\/\s*([A-Z]{3})\s*\/\s*([A-Z]{3})/.exec(all) || /AAR\d+\/\d+[A-Z]{3}, ([A-Z]{3})\/([A-Z]{3})/.exec(all);
   if (m) f.cityPair = `${m[1]}/${m[2]}`;

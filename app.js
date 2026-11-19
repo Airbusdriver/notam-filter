@@ -14,7 +14,7 @@ import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -159,7 +159,7 @@ function render() {
       <span class="kv">ETD ${etdLbl}</span>
       <span class="kv">ETA <b>${fmtZ(ctx.eta, false)}</b></span>
       <span class="kv">ALTN <b>${esc(ofp.altn || '—')}</b></span>
-      <span class="kv">노선코드 <b>${esc(ofp.routeCode || '—')}</b></span>
+      <span class="kv">CFP PLAN <b>${esc(ofp.cfpPlan || '—')}</b></span>
       <span class="kv">비행시간 <b>${ofp.flightMin != null ? `${Math.floor(ofp.flightMin / 60)}:${String(ofp.flightMin % 60).padStart(2, '0')}` : '—'}</b></span>
     </div>
     <div class="firs">${fir.map(([k, w]) => `<span class="chip"><b>${k}</b> ${w.map(x => fmtZ(x[0], false)).join('/')}</span>`).join('')}</div>
