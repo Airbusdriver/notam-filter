@@ -139,6 +139,9 @@ export function parseOFP(L) {
   }
   { // CFP PLAN 번호 (예: CFP PLAN 7445)
     const cp = /^CFP PLAN\s+(\S+)/m.exec(all); if (cp) f.cfpPlan = cp[1];
+    // 비행 종류: 'ATTN CAPT.  7771  REFILE' 줄 끝 (EDTO, REFILE 등)
+    const at = /^ATTN CAPT\.?\s+\S+\s+([A-Z][A-Z0-9 /&+-]*?)\s*$/m.exec(all);
+    if (at) f.flightType = at[1].trim().split(/\s+/).filter(Boolean);
   }
   // 도시쌍 (ICN/FRA)
   m = /\b(?:OZ|KE|AAR|KAL)\s?\d+\s*\/\s*([A-Z]{3})\s*\/\s*([A-Z]{3})/.exec(all) || /AAR\d+\/\d+[A-Z]{3}, ([A-Z]{3})\/([A-Z]{3})/.exec(all);

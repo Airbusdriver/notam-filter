@@ -14,7 +14,7 @@ import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.8.2';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -155,6 +155,7 @@ function render() {
   h += `<div class="panel">
     <div class="flt">
       <span class="big">${esc(ofp.flight || '—')} ${esc(ofp.dep || '')} → ${esc(ofp.dest || '')}</span>
+      ${(ofp.flightType || []).map(t => `<span class="ftype">${esc(t)}</span>`).join('')}
       <span class="kv">날짜 <b>${ofp.date != null ? fmtZ(ofp.date).slice(0, 5) + String(new Date(ofp.date).getUTCFullYear()).slice(2) : '—'}</b></span>
       <span class="kv">ETD ${etdLbl}</span>
       <span class="kv">ETA <b>${fmtZ(ctx.eta, false)}</b></span>
