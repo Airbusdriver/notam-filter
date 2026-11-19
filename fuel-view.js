@@ -11,38 +11,35 @@ const sign = x => (x > 0 ? '+' : x < 0 ? '−' : '±') + W(Math.abs(x));
 const box = (v, cls = '') => `<span class="fm-box ${cls}">${v}</span>`;
 const grn = (v, cls = '') => `<span class="fm-g ${cls}">${v}</span>`;
 
-export function fuelKey(ofp) { return `nf.load.${ofp.flight || ''}.${ofp.date ?? ''}`; }
-
-export function renderFuel(fu, ofp, ctx, ov = {}) {
+export function renderFuel(fu, ofp, ctx) {
   if (!fu || !fu.ok) return `${(fu?.warnings || ['OFP 연료 요약을 찾지 못했습니다.']).map(w => `<div class="warn">${esc(w)}</div>`).join('')}`;
-  const P = fmsPage(fu, ofp, ov, ctx), K = checkFuel(fu, P);
+  const P = fmsPage(fu, ofp, {}, ctx), K = checkFuel(fu, P);
   const U = fu.unit === 'KG' ? 'T (×1000 KG)' : '×1000 LB';
   const bad = K.sums.filter(x => !x.ok).length, over = K.limits.filter(x => !x.ok).length;
   let h = fu.warnings.map(w => `<div class="warn">${esc(w)}</div>`).join('');
   h += `<div class="rc-sum ${bad || over ? 'bad' : 'ok'}">${over ? `무게 제한 초과 ${over}건` : bad ? `OFP 연료 합계 불일치 ${bad}건` : 'OFP 연료·무게 합계 일치'}
-    <span class="note">단위 ${U} · OFP ${esc(fu.unitBase + fu.unit + 'S')}${P.overridden ? ' · <b>로드시트 값 적용 중</b>' : ' · OFP 계획값'}</span></div>`;
+    <span class="note">단위 ${U} · OFP ${esc(fu.unitBase + fu.unit + 'S')} · FMS 초기 셋업용 OFP 계획값</span></div>`;
 
   // ---------- FMS 페이지 ----------
   const pct = P.rsvPct == null ? '--.-' : P.rsvPct.toFixed(1);
-  const ovc = k => (ov[k] != null ? ' fm-ov' : '');
   h += `<div class="fm-wrap"><div class="fm">
     <div class="fm-title">ACTIVE/FUEL&amp;LOAD</div>
     <div class="fm-r3"><span>GW</span>${grn('---.-')}<span>CG</span>${grn('--.-%')}<span>FOB</span>${grn('---.-')}</div>
     <div class="fm-grid">
-      <label>ZFW</label>${box(W(P.zfw), 'w' + ovc('zfw'))}<label>ZFWCG</label>${box(P.cg != null ? (+P.cg).toFixed(1) + '<small>%</small>' : '--.-<small>%</small>', ovc('cg'))}
-      <label>BLOCK</label>${box(W(P.block), 'w' + ovc('block'))}<span></span><span></span>
+      <label>ZFW</label>${box(W(P.zfw), 'w')}<label>ZFWCG</label>${box('--.-<small>%</small>')}
+      <label>BLOCK</label>${box(W(P.block), 'w')}<span></span><span></span>
     </div>
     <hr>
     <div class="fm-two">
       <div class="fm-grid2">
         <label>TAXI</label>${box(W(P.taxi))}<span></span>
-        <label>TRIP</label>${grn(W(P.trip) + (P.tripAdj ? '<sup>≈</sup>' : ''))}${grn(T(P.tripMin))}
+        <label>TRIP</label>${grn(W(P.trip))}${grn(T(P.tripMin))}
         <label>RTE RSV</label>${box(W(P.rsv))}${box(pct + '<small>%</small>', 'sm')}
         <label>ALTN</label>${box(W(P.altn))}${grn(T(P.altnMin))}
         <label>FINAL</label>${box(W(P.fin))}${box(T(P.finMin), 'sm')}
       </div>
       <div class="fm-grid3">
-        <label>PAX NBR</label>${box(P.pax ?? '---', 'n' + ovc('pax'))}
+        <label>PAX NBR</label>${box(P.pax ?? '---', 'n')}
         <label>MODE</label>${box('ECON', 'n')}
         <label>CI</label>${box(P.ci ?? '---', 'n')}
         <label>TOW</label>${grn(W(P.tow))}
@@ -57,19 +54,7 @@ export function renderFuel(fu, ofp, ctx, ov = {}) {
       <div class="fm-min"><div>MIN FUEL AT DEST</div>${box(W(P.minDest), 'w')}<div>EXTRA</div><div>${grn(W(P.extra), P.extra < 0 ? 'neg' : '')} ${grn(P.extraMin != null ? T(P.extraMin) : '', 'sm')}</div></div>
     </div>
   </div>
-  <div class="fm-legend note"><span class="fm-box mini">파란 사각형</span> FMS에 입력하는 값 · <b class="fm-lg">초록</b> FMS가 계산해 보여줄 값(대조용)${P.tripAdj ? ` · TRIP≈ ZFW·BLOCK 변경으로 OFP 보정률(${fu.tripAdj.inc} LBS / ${fu.tripAdj.per} LBS TOW)을 적용한 추정값(${sign(P.tripAdj)})` : ''}</div>
-  </div>`;
-
-  // ---------- 로드시트 입력 ----------
-  const iv = (k, ph, step = '0.1') => `<input class="ld-in" data-k="${k}" type="number" inputmode="decimal" step="${step}" placeholder="${ph}" value="${ov[k] == null ? '' : k === 'cg' || k === 'pax' ? ov[k] : (ov[k] / 10).toFixed(1)}">`;
-  h += `<div class="panel ld"><div class="ld-h"><b>로드시트·실제 값</b><span class="note">비워두면 OFP 값 사용 · 이 비행(${esc(ofp.flight || '')})에만 저장</span><span class="grow"></span><button id="ldReset" class="noprint">지우기</button></div>
-    <div class="ld-g">
-      <label>ZFW <small>${U}</small>${iv('zfw', W(fu.w.zfw))}</label>
-      <label>ZFWCG <small>%MAC</small>${iv('cg', '--.-')}</label>
-      <label>BLOCK <small>${U}</small>${iv('block', W(fu.ramp?.f))}</label>
-      <label>PAX NBR${iv('pax', fu.pax?.total ?? '---', '1')}</label>
-    </div>
-    ${P.overridden ? `<div class="note" style="margin-top:6px">OFP 대비 ZFW ${sign((P.zfw ?? 0) - (fu.w.zfw ?? 0))} · BLOCK ${sign((P.block ?? 0) - (fu.ramp?.f ?? 0))} · TOW ${sign((P.tow ?? 0) - (fu.w.tow ?? 0))} · EXTRA ${W(P.extra)}</div>` : ''}
+  <div class="fm-legend note"><span class="fm-box mini">파란 사각형</span> FMS에 입력하는 값 · <b class="fm-lg">초록</b> FMS가 계산해 보여줄 값(대조용) · ZFWCG는 로드시트 값으로 입력</div>
   </div>`;
 
   // ---------- 무게 제한 ----------
@@ -92,24 +77,10 @@ export function renderFuel(fu, ofp, ctx, ov = {}) {
   if (fu.ci != null || fu.speedSkd) ref.push(['CI·속도', `CI ${fu.ci ?? '—'} · ${esc(fu.speedSkd || '')}${fu.perfFactor ? ` · PERF FACTOR ${esc(fu.perfFactor)}%` : ''}`]);
   if (fu.pax) ref.push(['PAX NBR', `<b>${fu.pax.total}</b> = ${fu.pax.cls.map(c => `${c.c} ${c.n}`).join(' + ')} <span class="note">(${esc(fu.pax.line)})</span>`]);
   if (fu.payload) ref.push(['PAYLOAD', `PAX ${fu.payload.pax.toLocaleString()} · CARGO ${fu.payload.cargo.toLocaleString()} ${esc(fu.payload.u)} · PLD ${W(fu.w.pld)} · SOW ${W(fu.w.sow)}`]);
-  if (fu.tripAdj) ref.push(['TRIP 보정', `TOW ${fu.tripAdj.per.toLocaleString()} LBS 증가 시 TRIP +${fu.tripAdj.inc} LBS`]);
   if (fu.stat) ref.push(['노선 통계', `TRIP 실제−계획: 평균 ${fu.stat.mean.toLocaleString()} · 90% ${fu.stat.p90.toLocaleString()} · 99% ${fu.stat.p99.toLocaleString()} LBS`]);
   h += `<div class="grp">참고 <span class="ln"></span></div><div class="panel"><dl class="meta fu-ref">${ref.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>`;
 
   h += `<details class="panel"><summary class="orig-lbl" style="cursor:pointer">OFP 연료 요약 원문</summary><pre class="rc-src" style="white-space:pre">${esc((fu.head || []).join('\n'))}</pre></details>`;
-  h += `<p class="note">FMS 화면 배치를 흉내 낸 참고값입니다. 실제 입력은 최종 로드시트와 OFP 원문을 기준으로 하세요. DEST UTC는 OFP ETD(출발시각 변경 설정 반영) + 비행시간입니다.</p>`;
+  h += `<p class="note">FMS 화면 배치를 흉내 낸 참고값입니다. 입력 전 OFP 원문과 대조하세요. DEST UTC는 OFP ETD(출발시각 변경 설정 반영) + 비행시간입니다.</p>`;
   return h;
 }
-
-export function bindFuel(el, key, ov, onChange) {
-  const save = () => { try { const o = Object.fromEntries(Object.entries(ov).filter(([, v]) => v != null)); if (Object.keys(o).length) localStorage.setItem(key, JSON.stringify(o)); else localStorage.removeItem(key); } catch { /* 저장 실패해도 동작 */ } };
-  el.querySelectorAll('.ld-in').forEach(inp => inp.onchange = () => {
-    const k = inp.dataset.k, v = inp.value.trim();
-    if (v === '' || Number.isNaN(+v)) ov[k] = null;
-    else ov[k] = k === 'cg' ? +(+v).toFixed(1) : k === 'pax' ? Math.round(+v) : Math.round(+v * 10);
-    save(); onChange();
-  });
-  const rb = el.querySelector('#ldReset'); if (rb) rb.onclick = () => { for (const k of Object.keys(ov)) ov[k] = null; save(); onChange(); };
-}
-
-export function loadOv(key) { try { return JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { return {}; } }

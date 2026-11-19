@@ -3,14 +3,14 @@ import { extractLines, prepare, evaluate, fmtZ, DEFAULTS, CORE_VERSION, cleanLin
 import { compareRoutes } from './route.js';
 import { renderRouteCheck } from './route-view.js';
 import { parseFuel } from './fuel.js';
-import { renderFuel, bindFuel, fuelKey, loadOv } from './fuel-view.js';
+import { renderFuel } from './fuel-view.js';
 import { interpret, CAT_KO, esc, sectKo } from './interp.js';
 import { decodeEN } from './decode.js';
 import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -97,7 +97,6 @@ function analyzeAndRender() {
     const T = cleanLines(state.lines).map(l => l.t);
     try { state.rc = compareRoutes(T, state.prep.ofp); } catch (e) { console.error(e); state.rc = null; }
     try { state.fu = parseFuel(T, state.prep.ofp); } catch (e) { console.error(e); state.fu = null; }
-    state.fuKey = fuelKey(state.prep.ofp); state.ov = loadOv(state.fuKey);
   }
   const etdOverride = parseEtd(state.prep.ofp);
   state.R = evaluate(state.prep, etdOverride != null ? { ...settings, etdOverride } : settings);
@@ -164,12 +163,11 @@ function render() {
     <input id="q" type="search" placeholder="검색 (ID·지점·단어)" value="${esc(state.q)}" style="width:190px">
     <div class="seg" id="view">${[['both', '해석+원문'], ['ko', '해석'], ['raw', '원문']].map(([k, l]) => `<button data-v="${k}" class="${state.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`}
   </div>`;
-  h += isFuel ? `<div id="fuel">${renderFuel(fu, ofp, ctx, state.ov)}</div>` : isRc ? `<div id="rc">${renderRouteCheck(rc)}</div>` : `<div id="list">${renderList()}</div>`;
+  h += isFuel ? `<div id="fuel">${renderFuel(fu, ofp, ctx)}</div>` : isRc ? `<div id="rc">${renderRouteCheck(rc)}</div>` : `<div id="list">${renderList()}</div>`;
   h += `<p class="note noprint" style="margin-top:20px">규칙 기반 자동 분류·해석입니다. 공식 브리핑을 대신하지 않으며, '검토'·'제외' 항목도 최종 확인은 원문으로 하세요. · v${APP_VERSION}/${CORE_VERSION}</p>`;
   el.innerHTML = h;
 
   el.querySelector('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.tab = b.dataset.t; render(); };
-  if (isFuel) { bindFuel(el, state.fuKey, state.ov, render); return; }
   if (isRc) return;
   el.querySelector('#view').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; store.set('nf.view', state.view); render(); };
   const q = el.querySelector('#q');

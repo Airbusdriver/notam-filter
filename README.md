@@ -29,7 +29,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
   - 입력값(파란 사각형): ZFW · ZFWCG · BLOCK · TAXI · RTE RSV · ALTN · FINAL · PAX NBR · CI / 대조값(초록): TRIP · TOW · LW · DEST/ALTN UTC·EFOB · EXTRA
   - MIN FUEL AT DEST = ALTN + FINAL, EXTRA = BLOCK − TAXI − TRIP − RTE RSV − ALTN − FINAL (= DISC + TANKERING)
   - OFP 합계 검증(RESERVE·RQD·PLN TAKEOFF·RAMP·FOD·TOW·LDW·ZFW)과 MZFW·MTOW·PLAN AGTOW·MLDW 여유 표시
-  - 로드시트 ZFW·ZFWCG·BLOCK·PAX 입력 시 TOW·LW·EFOB·EXTRA 재계산, TRIP은 OFP 보정률(예: 2000 LBS당 784 LBS)로 추정(≈ 표시). 비행별로 기기에 저장
+  - FMS 초기 셋업용: OFP 계획값만 표시(ZFWCG는 OFP에 없어 빈칸)
   - 참고: REFILE 결심점 필요 연료, CCF, DISC 사유, CI·속도, 예약 승객, 노선 연료 통계
 - 보기: 해석+원문 / 해석 / 원문 (가로 화면에서는 좌우로 나란히 표시)
 - **설정**: 경로 판정 폭(기본 25NM), 시간 여유(통과 전 30분 / 후 120분), 고도 여유(2000ft), 출발시각 변경(지연 시)
