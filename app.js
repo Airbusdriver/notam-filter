@@ -4,13 +4,15 @@ import { compareRoutes } from './route.js';
 import { renderRouteCheck } from './route-view.js';
 import { parseFuel } from './fuel.js';
 import { renderFuel } from './fuel-view.js';
+import { parseInit } from './init.js';
+import { renderInit } from './init-view.js';
 import { interpret, CAT_KO, esc, sectKo } from './interp.js';
 import { decodeEN } from './decode.js';
 import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.7.0';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -97,6 +99,7 @@ function analyzeAndRender() {
     const T = cleanLines(state.lines).map(l => l.t);
     try { state.rc = compareRoutes(T, state.prep.ofp); } catch (e) { console.error(e); state.rc = null; }
     try { state.fu = parseFuel(T, state.prep.ofp); } catch (e) { console.error(e); state.fu = null; }
+    try { state.it = parseInit(T, state.prep.ofp); } catch (e) { console.error(e); state.it = null; }
   }
   const etdOverride = parseEtd(state.prep.ofp);
   state.R = evaluate(state.prep, etdOverride != null ? { ...settings, etdOverride } : settings);
@@ -108,7 +111,7 @@ function analyzeAndRender() {
 /* ---------- 렌더링 ---------- */
 const STATUS_KO = { relevant: '관련', review: '검토', excluded: '제외' };
 const TABS = [
-  ['route', '경로·FIR'], ['airport', '출발·도착·교체'], ['alt', 'REFILE·ERA'], ['excluded', '제외됨'], ['all', '전체'], ['rte', '항로 대조'], ['fuel', 'FUEL & LOAD'],
+  ['route', '경로·FIR'], ['airport', '출발·도착·교체'], ['alt', 'REFILE·ERA'], ['excluded', '제외됨'], ['all', '전체'], ['rte', '항로 대조'], ['init', 'INIT'], ['fuel', 'FUEL & LOAD'],
 ];
 function tabOfRaw(n) {
   if (n.sect === 'FIR' || n.sect === 'ENR') return 'route';
@@ -133,8 +136,10 @@ function render() {
   tabN.rte = !rc || !rc.coStr || !rc.fplStr ? '?' : rcBad ? `✗${rcBad}` : rc.counts.chk ? `확인${rc.counts.chk}` : '✓';
   const fu = state.fu, fuOk = fu && fu.ok;
   tabN.fuel = !fuOk ? '?' : fu.warnings.length ? '확인' : '✓';
-  const isFuel = state.tab === 'fuel';
-  const isRc = state.tab === 'rte' || isFuel;
+  const it = state.it;
+  tabN.init = !it || !it.ok ? '?' : it.warnings.length ? '확인' : '✓';
+  const isFuel = state.tab === 'fuel', isInit = state.tab === 'init';
+  const isRc = state.tab === 'rte' || isFuel || isInit;
 
   const fir = Object.entries(ctx.firWin).filter(([k]) => (ofp.eet || []).some(e => e.fir === k) || k === (ofp.pkgFirs || [])[0])
     .sort((a, b) => a[1][0][0] - b[1][0][0]);
@@ -163,7 +168,7 @@ function render() {
     <input id="q" type="search" placeholder="검색 (ID·지점·단어)" value="${esc(state.q)}" style="width:190px">
     <div class="seg" id="view">${[['both', '해석+원문'], ['ko', '해석'], ['raw', '원문']].map(([k, l]) => `<button data-v="${k}" class="${state.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`}
   </div>`;
-  h += isFuel ? `<div id="fuel">${renderFuel(fu, ofp, ctx)}</div>` : isRc ? `<div id="rc">${renderRouteCheck(rc)}</div>` : `<div id="list">${renderList()}</div>`;
+  h += isInit ? `<div id="init">${renderInit(it, ofp)}</div>` : isFuel ? `<div id="fuel">${renderFuel(fu, ofp, ctx)}</div>` : isRc ? `<div id="rc">${renderRouteCheck(rc)}</div>` : `<div id="list">${renderList()}</div>`;
   h += `<p class="note noprint" style="margin-top:20px">규칙 기반 자동 분류·해석입니다. 공식 브리핑을 대신하지 않으며, '검토'·'제외' 항목도 최종 확인은 원문으로 하세요. · v${APP_VERSION}/${CORE_VERSION}</p>`;
   el.innerHTML = h;
 
