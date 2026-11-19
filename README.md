@@ -25,6 +25,12 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
   - FPL에만 있는 지점이라도 앞뒤가 같은 항로(W28 KEVOB W28)이면 step climb·descent 지점으로 보고 일치 처리(navlog 순서로 확인)
   - 속도·고도 변경점 표: 미터 고도(S/M)는 METER/FEET CONVERSION TABLE(China/Mongolia) 기준으로 미터와 FL·ft를 함께 표시, navlog 순항 FL과 비교
   - OFP 안 ATS FPL 사본끼리 15항이 다르면 경고
+- **FUEL & LOAD**: OFP 연료 요약(TRIP·RESERVE·ALTN·FINAL·CONT·DISC·TAXI·RAMP)과 무게(ZFW·TOW·LDW·제한값)를 읽어 A350 FMS ACTIVE/FUEL&LOAD 페이지 배치로 표시
+  - 입력값(파란 사각형): ZFW · ZFWCG · BLOCK · TAXI · RTE RSV · ALTN · FINAL · PAX NBR · CI / 대조값(초록): TRIP · TOW · LW · DEST/ALTN UTC·EFOB · EXTRA
+  - MIN FUEL AT DEST = ALTN + FINAL, EXTRA = BLOCK − TAXI − TRIP − RTE RSV − ALTN − FINAL (= DISC + TANKERING)
+  - OFP 합계 검증(RESERVE·RQD·PLN TAKEOFF·RAMP·FOD·TOW·LDW·ZFW)과 MZFW·MTOW·PLAN AGTOW·MLDW 여유 표시
+  - 로드시트 ZFW·ZFWCG·BLOCK·PAX 입력 시 TOW·LW·EFOB·EXTRA 재계산, TRIP은 OFP 보정률(예: 2000 LBS당 784 LBS)로 추정(≈ 표시). 비행별로 기기에 저장
+  - 참고: REFILE 결심점 필요 연료, CCF, DISC 사유, CI·속도, 예약 승객, 노선 연료 통계
 - 보기: 해석+원문 / 해석 / 원문 (가로 화면에서는 좌우로 나란히 표시)
 - **설정**: 경로 판정 폭(기본 25NM), 시간 여유(통과 전 30분 / 후 120분), 고도 여유(2000ft), 출발시각 변경(지연 시)
 - **화면 모드**: 자동(기기 설정 따름) / 라이트 / 다크 / 야간(적색) — 선택은 기기에 저장됨
@@ -48,7 +54,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 파일을 고쳐 다시 올린 뒤 `sw.js`의 `VERSION` 값을 바꾸면, 다음 온라인 실행 때 새 버전으로 바뀝니다.
 
 ## 파일
-`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 · `route.js` 항로 대조 · `route-view.js` 항로 대조 화면 ·
+`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 · `route.js` 항로 대조 · `route-view.js` 항로 대조 화면 · `fuel.js` 연료·무게 파싱 · `fuel-view.js` FUEL & LOAD 화면 ·
 `pdf.min.mjs`, `pdf.worker.min.mjs` PDF 텍스트 추출(Mozilla pdf.js, Apache-2.0, `PDFJS-LICENSE.txt`) ·
 `sw.js` 오프라인 캐시 · `manifest.webmanifest`, 아이콘
 
