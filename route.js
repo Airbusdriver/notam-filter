@@ -27,11 +27,22 @@ function navKey(w) {
 }
 
 /* ---------------- 속도·고도 표기 ---------------- */
-// 중국 미터 고도표(RVSM) — 미터 → 실제 사용 FL
-const CN_FL = { 8900: 291, 9200: 301, 9500: 311, 9800: 321, 10100: 331, 10400: 341, 10700: 351, 11000: 361, 11300: 371,
-  11600: 381, 11900: 391, 12200: 401, 12500: 411, 13100: 431, 13700: 451, 14300: 471, 14900: 491 };
+// METER/FEET CONVERSION TABLE (China / Mongolia) — 회사 환산표 그대로
+// FL Conversion: 미터 레벨 → ft (WB 180°~359°, EB 360°~179°)
+const FL_WB = { 13100: 43000, 12200: 40100, 11600: 38100, 11000: 36100, 10400: 34100, 9800: 32100, 9200: 30100, 8400: 27600, 7800: 25600,
+  7200: 23600, 6600: 21700, 6000: 19700, 5400: 17700, 4800: 15700, 4200: 13800, 3600: 11800, 3000: 9800, 2400: 7900, 1800: 5900, 1200: 3900 };
+const FL_EB = { 13700: 44900, 12500: 41100, 11900: 39100, 11300: 37100, 10700: 35100, 10100: 33100, 9500: 31100, 8900: 29100, 8100: 26600,
+  7500: 24600, 6900: 22600, 6300: 20700, 5700: 18700, 5100: 16700, 4500: 14800, 3900: 12800, 3300: 10800, 2700: 8900, 2100: 6900, 1500: 4900 };
+// ALT / HEIGHT Conversion
+const ALT_TBL = { 1000: 3300, 900: 3000, 800: 2600, 700: 2300, 600: 2000, 500: 1600, 450: 1500, 400: 1300, 350: 1100, 300: 1000 };
 const FT = 3.28084;
 const n0 = n => n.toLocaleString('en-US');
+export function metricToFeet(m, kind = 'S') {
+  if (FL_WB[m]) return { ft: FL_WB[m], tbl: 'WB' };
+  if (FL_EB[m]) return { ft: FL_EB[m], tbl: 'EB' };
+  if (ALT_TBL[m]) return { ft: ALT_TBL[m], tbl: 'ALT' };
+  return { ft: Math.round(m * FT), tbl: null };
+}
 export function decodeLevel(s) {
   if (!s) return null;
   if (s === 'VFR') return { raw: s, text: 'VFR', fl: null };
@@ -39,11 +50,13 @@ export function decodeLevel(s) {
   if (k === 'F') return { raw: s, text: `FL${s.slice(1)}`, fl: v };
   if (k === 'A') return { raw: s, text: `${n0(v * 100)}ft (고도)`, fl: v, alt: true };
   // S: 표준 미터 레벨(10m 단위), M: 미터 고도(10m 단위)
-  const m = v * 10, ft = Math.round(m * FT);
-  const tbl = k === 'S' ? CN_FL[m] : null;
-  const fl = tbl ?? Math.round(ft / 100);
-  return { raw: s, metric: true, m, ft, fl, exact: tbl != null,
-    text: `${n0(m)}m ${tbl != null ? '=' : '≈'} FL${String(fl).padStart(3, '0')} (${n0(ft)}ft)${k === 'M' ? ' 고도' : ''}` };
+  const m = v * 10, { ft, tbl } = metricToFeet(m, k);
+  const fl = Math.round(ft / 100);
+  const fls = `FL${String(fl).padStart(3, '0')}`;
+  const text = k === 'M'
+    ? `${n0(m)}m 고도 ${tbl ? '=' : '≈'} ${n0(ft)}ft${tbl ? '' : ' (계산값)'}`
+    : `${n0(m)}m ${tbl ? '=' : '≈'} ${fls} (${n0(ft)}ft${tbl ? '' : ', 표에 없음·계산값'})`;
+  return { raw: s, metric: true, m, ft, fl, exact: !!tbl, tbl, text };
 }
 export function decodeSpeed(s) {
   const k = s[0], v = +s.slice(1);

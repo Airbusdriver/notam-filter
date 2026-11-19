@@ -54,7 +54,7 @@ export function renderRouteCheck(rc) {
       h += `<tr class="${l.navOk === false ? 'st-chk' : ''}"><td><b>${esc(l.at)}</b>${l.first ? ' <span class="note">초기</span>' : ''}</td><td class="rc-raw">${esc(l.sl.raw)}</td><td>${esc(l.sl.spd.text)}</td><td><b>${esc(l.sl.lvl?.text || '')}</b></td><td>${nv}</td></tr>`;
     }
     h += `</tbody></table>
-    <p class="note" style="margin:8px 0 0">S/M 미터 고도: 중국 미터 고도표에 있는 값은 그 표의 FL로, 없는 값은 환산 ft 기준으로 표시합니다. navlog FL은 그 지점 뒤 구간에서 처음 도달하는 순항 고도입니다(≈는 1 차이, 예: 한국 FL320 → 중국 9,800m).</p></div>`;
+    <p class="note" style="margin:8px 0 0">S/M 미터 고도는 METER/FEET CONVERSION TABLE(China/Mongolia) 값으로 표시합니다(표에 없는 값만 계산값). navlog FL은 그 지점 뒤 구간에서 처음 도달하는 순항 고도입니다(≈는 1 차이, 예: 한국 FL320 → 중국 9,800m).</p></div>`;
   }
 
   // 원문

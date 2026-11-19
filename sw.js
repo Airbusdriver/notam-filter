@@ -1,5 +1,5 @@
 // 오프라인 캐시 — 파일을 바꾸면 VERSION을 올리세요
-const VERSION = 'nf-v1.5.0';
+const VERSION = 'nf-v1.5.1';
 const FILES = ['./', './index.html', './app.js', './core.js', './interp.js', './decode.js', './literal.js', './trfile.js', './route.js', './route-view.js', './pdf.min.mjs', './pdf.worker.min.mjs',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });

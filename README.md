@@ -23,7 +23,7 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 - **항로 대조**: OFP의 company route(`RKSI..NOPIK Y697 … DEBH2B EDDF`)와 ATS FPL 15항을 지점·항로 단위로 비교
   - 좌표 표기 통일(39N160E = N39E160), ARINC 6자 약식 절차명(DEBH2B = DEBHI2B)은 '일치(약식 표기)'
   - FPL에만 있는 지점이라도 앞뒤가 같은 항로(W28 KEVOB W28)이면 step climb·descent 지점으로 보고 일치 처리(navlog 순서로 확인)
-  - 속도·고도 변경점 표: 미터 고도(S/M)는 미터와 FL·ft를 함께 표시(중국 미터 고도표 값은 그 FL), navlog 순항 FL과 비교
+  - 속도·고도 변경점 표: 미터 고도(S/M)는 METER/FEET CONVERSION TABLE(China/Mongolia) 기준으로 미터와 FL·ft를 함께 표시, navlog 순항 FL과 비교
   - OFP 안 ATS FPL 사본끼리 15항이 다르면 경고
 - 보기: 해석+원문 / 해석 / 원문 (가로 화면에서는 좌우로 나란히 표시)
 - **설정**: 경로 판정 폭(기본 25NM), 시간 여유(통과 전 30분 / 후 120분), 고도 여유(2000ft), 출발시각 변경(지연 시)
