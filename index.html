@@ -83,7 +83,10 @@ details.gl{margin-top:8px;font-size:13px}
 details.gl summary{color:var(--acc);cursor:pointer}
 .gloss{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;line-height:1.75;margin-top:6px;background:var(--soft);border-radius:8px;padding:8px 10px}
 small.ko{font-family:-apple-system,"Apple SD Gothic Neo",sans-serif;font-size:10.5px;color:var(--ko);margin:0 3px 0 1px;vertical-align:1px}
-.aitr{white-space:pre-line;font-size:14.5px;line-height:1.6;margin-bottom:6px}
+.aitr{white-space:pre-line;font-size:14.5px;line-height:1.6;margin-bottom:8px}
+.lit{white-space:pre-line;font-size:14px;line-height:1.6;margin-bottom:8px}
+.ko-pane ul li{font-weight:600}
+.warnc{color:var(--rev);font-weight:600;margin-left:6px}
 button.mini{min-height:0;padding:1px 8px;font-size:11px;margin-left:6px;vertical-align:1px}
 b.dx{font-weight:600;color:var(--ko)}
 .dl{font-family:-apple-system,sans-serif;font-size:10.5px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-right:4px}
@@ -125,11 +128,12 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   </select>
   <button id="btnPrint">인쇄</button>
 </header>
-<input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
+<input type="file" id="file" accept="application/pdf,.pdf,application/json,.json" multiple hidden>
+<input type="file" id="trFile" accept="application/json,.json" multiple hidden>
 <main id="main">
   <div class="drop" id="drop">
     <h2>OFP PDF를 선택하세요</h2>
-    <p>NOTAM 패키지가 들어 있는 브리핑 PDF 한 개, 또는 OFP와 NOTAM PDF를 함께 선택할 수 있습니다.</p>
+    <p>NOTAM 패키지가 들어 있는 브리핑 PDF 한 개, 또는 OFP와 NOTAM PDF를 함께 선택할 수 있습니다. 번역 파일(.json)도 함께 선택할 수 있습니다.</p>
     <p>모든 처리는 이 기기 안에서만 이뤄지며, 파일은 어디에도 업로드되지 않습니다.</p>
     <p style="margin-top:18px"><button class="primary" onclick="document.getElementById('file').click()">PDF 선택</button>
     <button id="btnLast" hidden>마지막 OFP 다시 열기</button></p>
@@ -155,13 +159,16 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <div class="frm">
     <label for="sDec">영문 디코딩을 펼쳐서 보기</label><input id="sDec" type="checkbox" style="width:22px;height:22px">
   </div>
-  <h3 style="margin:18px 0 8px">AI 한국어 번역 (온라인, 선택)</h3>
+  <h3 style="margin:18px 0 8px">한국어 해석 방식</h3>
   <div class="frm">
-    <label for="sKey">Anthropic API 키</label><input id="sKey" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:200px">
-    <div class="h">console.anthropic.com에서 발급(Claude 구독과 별도, 사용량만큼 과금). 키는 이 기기에만 저장되고 api.anthropic.com으로만 전송됩니다.</div>
-    <label for="sModel">모델</label><select id="sModel"></select>
-    <span class="note" id="aiCount"></span><button id="sClearAI" type="button">번역 지우기</button>
-    <div class="h">출발 전 온라인에서 'AI 번역'을 누르면 번역이 기기에 저장되어 비행 중 오프라인에서도 보입니다.</div>
+    <label for="sKoMode">전문 해석</label>
+    <select id="sKoMode">
+      <option value="auto">번역 파일 우선 (없으면 직역)</option>
+      <option value="both">번역 파일 + 직역 함께</option>
+      <option value="literal">직역만 (오프라인)</option>
+    </select>
+    <div class="h">직역: 원문 전체를 이 기기에서 바로 한국어로 옮깁니다(어순이 영어식). 번역 파일: Claude 대화에서 만든 자연스러운 전문 번역(.json)을 불러와 저장합니다.</div>
+    <span class="note" id="trCount"></span><span><button id="sImportTr" type="button">번역 파일 불러오기</button> <button id="sClearTr" type="button">지우기</button></span>
   </div>
   <p style="text-align:right;margin-bottom:0"><button id="sReset">기본값</button> <button id="sClose" class="primary">적용</button></p>
 </dialog>

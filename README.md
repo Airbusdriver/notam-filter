@@ -25,9 +25,9 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 - **화면 모드**: 자동(기기 설정 따름) / 라이트 / 다크 / 야간(적색) — 선택은 기기에 저장됨
 - **인쇄**: 현재 탭을 인쇄·PDF 저장
 - **영문 디코딩**: 카드마다 원문 약어를 ICAO Doc 8400·FAA 약어 기준으로 풀어쓴 영어(풀린 단어는 파란색). 오프라인 동작
-- **AI 번역 (선택, 온라인)**: 설정에 Anthropic API 키를 넣고 출발 전 'AI 번역'을 누르면 현재 탭의 NOTAM(제외 항목 빼고)을
-  자연스러운 한국어로 번역해 기기에 저장 → 비행 중 오프라인에서도 표시. 카드별 'AI 번역' 버튼으로 한 건씩도 가능.
-  키는 console.anthropic.com에서 발급(Claude 구독과 별도 과금)하며 이 기기에만 저장됩니다.
+- **한국어 해석 방식** (설정): 번역 파일 우선(없으면 직역) / 번역 파일 + 직역 함께 / 직역만
+  - **전문 직역**: 원문 전체를 기기에서 바로 한국어로 옮김(오프라인, 축약 없음, 어순은 영어식)
+  - **번역 파일**: Claude 대화에서 만든 자연스러운 전문 번역(.json)을 불러와 저장. PDF와 함께 선택하거나 설정 → 번역 파일 불러오기
 
 ## 판정 기준
 | 구분 | 기준 |
@@ -43,6 +43,11 @@ NOTAM 패키지를 **관련 / 검토 / 제외**로 나누고, 원문과 한국�
 파일을 고쳐 다시 올린 뒤 `sw.js`의 `VERSION` 값을 바꾸면, 다음 온라인 실행 때 새 버전으로 바뀝니다.
 
 ## 파일
-`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `ai.js` AI 번역 ·
+`index.html` 화면 · `app.js` 화면 동작 · `core.js` OFP/NOTAM 파싱과 경로 매칭 · `interp.js` 한국어 자동 요약 · `decode.js` 영문 디코딩 · `literal.js` 전문 직역 · `trfile.js` 번역 파일 ·
 `pdf.min.mjs`, `pdf.worker.min.mjs` PDF 텍스트 추출(Mozilla pdf.js, Apache-2.0, `PDFJS-LICENSE.txt`) ·
 `sw.js` 오프라인 캐시 · `manifest.webmanifest`, 아이콘
+
+## 번역 파일 만들기 (Claude 대화에서)
+1. `node tools/export.mjs <OFP.pdf> to-translate.json` — 앱과 같은 판정으로 번역 대상(제외·ERA 빼고)을 loc/id/해시/원문으로 내보냄
+2. 각 항목의 `ko`에 전문 번역을 채우고 `{"format":"notam-ko-v1", ..., "items":[{"loc","id","h","ko"}]}`로 저장
+3. 아이패드 앱에서 불러오기 — 해시가 같으면 정확히 연결되고, 번호만 같으면 '원문이 바뀌었을 수 있음'으로 표시
