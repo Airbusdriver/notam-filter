@@ -20,7 +20,7 @@ import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.12.1';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -145,6 +145,7 @@ const STATUS_KO = { relevant: '관련', review: '검토', excluded: '제외' };
 const TABS = [
   ['route', '경로·FIR'], ['airport', '출발·도착·교체'], ['alt', 'REFILE·ERA'], ['excluded', '제외됨'], ['all', '전체'], ['rte', '항로 대조'], ['mel', 'MEL/CDL'], ['init', 'INIT'], ['fuel', 'FUEL & LOAD'], ['edto', 'EDTO'], ['refile', 'REFILE 연료'], ['sr', 'SR'],
 ];
+const NOTAM_TABS = ['route', 'airport', 'alt', 'excluded', 'all'];
 function tabOfRaw(n) {
   if (n.sect === 'FIR' || n.sect === 'ENR') return 'route';
   if (n.sect === 'DEP' || n.sect === 'DEST' || n.sect === 'ALTN') return 'airport';
@@ -209,7 +210,10 @@ function render() {
     <div class="note" style="margin-top:6px">${esc(state.name)} ·${state.readMs ? ` PDF 읽기 ${(state.readMs / 1000).toFixed(1)}초 ·` : ''} 항법점 ${ofp.wpts.length}개 · 항로 ${ofp.airways.size}개 · NOTAM ${notams.length}건 · 판정 ${state.ms}ms · 판정 폭 ${settings.bufferNM}NM · 시간여유 −${settings.before}/+${settings.after}분</div>
   </div>`;
   h += `<div class="toolbar">
-    <div class="seg" id="tabs">${tabs.map(([k, l]) => `<button data-t="${k}" class="${state.tab === k ? 'on' : ''}${k === 'rte' && rcBad ? ' rc-alert' : ''}">${l}<span class="n">${tabN[k]}</span></button>`).join('')}</div>
+    <div class="tabs" id="tabs">${[['NOTAM', NOTAM_TABS], ['OFP', null]].map(([g, keys]) => {
+      const bs = tabs.filter(([k]) => keys ? keys.includes(k) : !NOTAM_TABS.includes(k));
+      return `<div class="tabrow"><span class="tabgrp">${g}</span><div class="tabbtns">${bs.map(([k, l]) => `<button data-t="${k}" class="${state.tab === k ? 'on' : ''}${k === 'rte' && rcBad ? ' rc-alert' : ''}"><span class="tl">${l}</span><span class="n">${tabN[k] ?? ''}</span></button>`).join('')}</div></div>`;
+    }).join('')}</div>
     ${isRc ? '' : `<div class="counts" title="현재 탭 기준">${state.tab === 'excluded' ? '' : `<span class="count c-rel">관련 ${counts.relevant}</span><span class="count c-rev">검토 ${counts.review}</span>`}<span class="count c-exc">제외 ${counts.excluded}</span></div>
     <span class="grow"></span>
     <input id="q" type="search" placeholder="검색 (ID·지점·단어)" value="${esc(state.q)}" style="width:190px">
