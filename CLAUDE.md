@@ -20,7 +20,7 @@
 ## 저장소와 배포
 - 저장소: https://github.com/Airbusdriver/notam-filter (main 브랜치 루트)
 - 웹 주소: https://airbusdriver.github.io/notam-filter/
-- 현재 버전: v1.12.0 (2026-11-20) — SR 탭 추가 (v1.11.3 아이콘 OFP, v1.11.2 앱 이름 "OFP SUMMARY", 저장소·주소는 notam-filter 그대로)
+- 현재 버전: v1.12.1 (2026-11-20) — 탭을 NOTAM / OFP 두 줄로 정리 (v1.12.0 SR 탭, v1.11.3 아이콘 OFP, v1.11.2 앱 이름 "OFP SUMMARY", 저장소·주소는 notam-filter 그대로)
 - 오프라인 주의: 주소는 반드시 끝에 / 를 붙인 https://airbusdriver.github.io/notam-filter/ 로 연다. / 없는 주소는 서비스워커 범위 밖이라 오프라인에서 열리지 않는다(GitHub 리디렉트가 온라인에서만 동작).
 - **반영 방식(사용자 결정):** 앱 동작에 영향이 없는 변경(CLAUDE.md·README·.gitignore 등 문서·설정)은 PR 없이 main에 바로 올린다. 앱 코드(HTML·JS·sw.js 등)를 바꾸는 변경은 브랜치에서 PR을 열어 사용자 확인을 받은 뒤 합친다.
 - **업데이트 규칙:** 파일을 수정하면 `sw.js`의 `VERSION` 값을 올려야 설치된 홈 화면 앱이 새 버전을 받는다. 새 파일은 `sw.js`의 `FILES`에도 추가한다.
@@ -38,6 +38,7 @@ OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL
 ### 탭 순서
 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / 항로 대조 / MEL/CDL / INIT / FUEL & LOAD / (EDTO) / (REFILE 연료) / SR
 (EDTO·REFILE 탭은 해당 비행일 때만 보인다. SR 탭은 항상 맨 오른쪽)
+- 화면 배치(v1.12.1): 탭을 두 줄로 나눈다 — NOTAM 줄(경로·FIR ~ 전체), OFP 줄(항로 대조 ~ SR). 줄마다 칸 너비 균등, 탭 이름 아래에 숫자, 버튼 높이 50px(터치). 폭 640px 이하에서는 4열로 줄바꿈
 
 ## 메인 정보줄 (v1.8.1 ~ v1.11.0)
 - 순서: 편명 구간 [비행 종류] · 날짜 · ETD · 이륙 [입력칸] · ETA · ALTN · CFP PLAN · 비행시간

@@ -61,6 +61,20 @@ input.tko::placeholder{color:var(--muted);opacity:.8;font-weight:400}
 .seg button{border:0;border-radius:0;background:transparent;padding:7px 12px}
 .seg button.on{background:var(--acc);color:#fff}
 .seg button .n{font-size:11px;opacity:.8;margin-left:4px}
+/* 탭 (v1.12.1) — NOTAM / OFP 두 줄, 칸 너비 균등, iPad 가로·세로 대응 */
+.tabs{flex:1 1 100%;display:flex;flex-direction:column;gap:6px}
+.tabrow{display:flex;align-items:stretch;gap:8px}
+.tabgrp{flex:0 0 46px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted)}
+.tabbtns{flex:1;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--soft)}
+.tabbtns button{border:0;border-radius:0;background:transparent;min-height:50px;padding:5px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.15;border-left:1px solid var(--line)}
+.tabbtns button:first-child{border-left:0}
+.tabbtns button .tl{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tabbtns button .n{font-size:12px;opacity:.75;white-space:nowrap;margin:0}
+.tabbtns button.on{background:var(--acc);color:#fff}
+.tabbtns button.on .n{opacity:.9}
+.tabbtns button.rc-alert:not(.on){color:#b42318}
+@media (max-width:860px){.tabbtns button .tl{font-size:14px}.tabgrp{flex-basis:38px;font-size:10px}}
+@media (max-width:640px){.tabrow{flex-direction:column;gap:2px}.tabgrp{justify-content:flex-start;flex-basis:auto}.tabbtns{grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr))}.tabbtns button{border-top:1px solid var(--line)}}
 .grow{flex:1}
 .counts{display:flex;gap:8px;flex-wrap:wrap}
 .count{border-radius:10px;padding:6px 12px;font-weight:600}
