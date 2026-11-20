@@ -20,7 +20,7 @@
 ## 저장소와 배포
 - 저장소: https://github.com/Airbusdriver/notam-filter (main 브랜치 루트)
 - 웹 주소: https://airbusdriver.github.io/notam-filter/
-- 현재 버전: v1.11.3 (2026-11-20) — 아이콘을 "OFP" 글자로 변경 (v1.11.2: 앱 이름 "OFP SUMMARY", 저장소·주소는 notam-filter 그대로)
+- 현재 버전: v1.12.0 (2026-11-20) — SR 탭 추가 (v1.11.3 아이콘 OFP, v1.11.2 앱 이름 "OFP SUMMARY", 저장소·주소는 notam-filter 그대로)
 - 오프라인 주의: 주소는 반드시 끝에 / 를 붙인 https://airbusdriver.github.io/notam-filter/ 로 연다. / 없는 주소는 서비스워커 범위 밖이라 오프라인에서 열리지 않는다(GitHub 리디렉트가 온라인에서만 동작).
 - **반영 방식(사용자 결정):** 앱 동작에 영향이 없는 변경(CLAUDE.md·README·.gitignore 등 문서·설정)은 PR 없이 main에 바로 올린다. 앱 코드(HTML·JS·sw.js 등)를 바꾸는 변경은 브랜치에서 PR을 열어 사용자 확인을 받은 뒤 합친다.
 - **업데이트 규칙:** 파일을 수정하면 `sw.js`의 `VERSION` 값을 올려야 설치된 홈 화면 앱이 새 버전을 받는다. 새 파일은 `sw.js`의 `FILES`에도 추가한다.
@@ -36,8 +36,8 @@
 OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL 항로, navlog 지점, 좌표 구역, FIR 진입시각(EET), 통과 고도, D) 운용시간으로 NOTAM을 관련 / 검토 / 제외로 나누고, 원문과 해석을 함께 보여준다. 처리는 모두 기기 안(iPad Safari·Chrome)에서 오프라인으로 한다.
 
 ### 탭 순서
-경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / 항로 대조 / MEL/CDL / INIT / FUEL & LOAD
-(EDTO·REFILE 탭은 해당 비행일 때만 보인다)
+경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / 항로 대조 / MEL/CDL / INIT / FUEL & LOAD / (EDTO) / (REFILE 연료) / SR
+(EDTO·REFILE 탭은 해당 비행일 때만 보인다. SR 탭은 항상 맨 오른쪽)
 
 ## 메인 정보줄 (v1.8.1 ~ v1.11.0)
 - 순서: 편명 구간 [비행 종류] · 날짜 · ETD · 이륙 [입력칸] · ETA · ALTN · CFP PLAN · 비행시간
@@ -48,6 +48,14 @@ OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL
 ## EDTO / REFILE 탭
 - **EDTO 비행:** EEP · ETP · EXP 좌표와 EDTO 교체공항을 뽑아 보여준다 (OZ204 OFP로 테스트).
 - **EDTO가 아닌 REFILE 비행:** REFILE 데이터(결심점 연료 요약 등)를 보여준다. VFR 값은 **'VFR + ½ FINAL RES'(NAR 요구량)로 수정했다고 표시**한다. 근거: FOM 5장 (135), FLEET NOTICE.
+
+## SR 탭 (v1.12.0, sr.js · sr-view.js) — 맨 오른쪽 탭
+- 출처: OFP 본 navlog(첫 "DIST LATITUDE MC" ~ "ROUTE TO ALTN")의 SR(Shear Rate) 열. REFILE navlog는 제외
+- navlog 각 기록 첫 줄의 값은 '이전 지점 → 해당 지점' 구간 값. 줄 끝에서부터 B/O·ZT·TAS·SR 순으로 읽는다(WIND/COMP에 "21020 000"처럼 공백이 들어갈 수 있음)
+- **사용자 기준: SR 5 이상** 구간을 연속 구간으로 묶어 표시(구간 시작·끝 지점, 지점별 SR, 고도, 거리, ETO). 기준값은 sr.js의 SR_LIMIT
+- 최대 SR 지점 표시(같은 값이면 모두). 상승·강하(..)는 값 없음. 전체 구간 SR 표는 접어서 제공
+- ETO는 이륙시간 입력이 있으면 그 기준으로 다시 계산(ctx.eto)
+- 탭 숫자: "n구간·최대값" (5 이상 구간이 없으면 "최대n")
 
 ## 항로 대조 탭 (v1.5.x, route.js · route-view.js)
 - 비교 대상: OFP 상단 company route 문자열(`RKSI..NOPIK Y697 … DEBH2B EDDF` 형식) ↔ ATS FPL 15항
@@ -124,6 +132,7 @@ OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL
 - `init.js` / `init-view.js` (INIT)
 - `fuel.js` / `fuel-view.js` (FUEL & LOAD)
 - `edto.js` / `edto-view.js` · `refile.js` / `refile-view.js`
+- `sr.js` / `sr-view.js` (SR)
 - `interp.js`(요약) · `literal.js`(전문 직역) · `decode.js`(영문 디코딩) · `trfile.js`(번역 파일)
 - `tools/export.mjs`
 - `pdf.min.mjs` / `pdf.worker.min.mjs` (pdf.js)
@@ -144,6 +153,10 @@ OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL
 - v1.8.0 MEL/CDL:
   - AAR541: MEL 3건 21-59-01A · 30-81-01A · 50-20-01A (3건 모두 끝 잘림), 노트 CHECKED ABOVE MEL, HL7771
   - AAR204: CDL 2건 27-21(잘림) · 27-23, 노트 CHECKED ABOVE CDL, HL8360
+- v1.12.0 SR (원본 PDF로 검증, pdftotext 독립 추출과 SR 5 이상 값 일치):
+  - AAR541: 154구간, 최대 SR 7 AGAVO→IKEKA. 5 이상 3구간 — AGAVO→IKEKA(7) · SEBLI→HCH(WEH 6 · FZ 6 · TEKAM 5 · HCH 5) · PIGAL→TIRBA(5). 이륙 0610 입력 시 IKEKA ETO 0640Z
+  - AAR204: 58구간, 최대 SR 7 (TATAM · BEKEN · ADNAP · 40E80 · ETP2 · 39N60). 5 이상 6구간 — LESBU→BUSKO · IGOBI→TATAM · SDE→BEKEN · OATIS→EMRON · 40E70→40E80 · 40N70→39N60
+  - 이륙시간 입력칸이 NOTAM 이외 탭(항로 대조~SR)에서 동작하지 않던 문제 수정 (v1.12.0)
 - v1.11.0 이륙시간 입력 (AAR541): 기본 ETA 1529Z. 이륙 0610 입력 시 ETA 1914Z · RKRR 0610Z · ZSHA 0634Z…, FIR NOTAM 관련 8→6. 잘못된 값(2575)은 빨간 칸, 계산 미반영.
 
 ## 앞으로 할 것
