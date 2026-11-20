@@ -10,13 +10,15 @@ import { parseMel } from './mel.js';
 import { renderMel } from './mel-view.js';
 import { parseEdto } from './edto.js';
 import { renderEdto } from './edto-view.js';
+import { parseRefile } from './refile.js';
+import { renderRefile } from './refile-view.js';
 import { interpret, CAT_KO, esc, sectKo } from './interp.js';
 import { decodeEN } from './decode.js';
 import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.10.0';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -106,6 +108,8 @@ function analyzeAndRender() {
     try { state.it = parseInit(T, state.prep.ofp); } catch (e) { console.error(e); state.it = null; }
     try { state.mel = parseMel(T); } catch (e) { console.error(e); state.mel = null; }
     try { state.ed = parseEdto(T, state.prep.ofp); } catch (e) { console.error(e); state.ed = null; }
+    try { state.rf = parseRefile(T, state.prep.ofp); } catch (e) { console.error(e); state.rf = null; }
+    state.rfFob = '';
   }
   const etdOverride = parseEtd(state.prep.ofp);
   state.R = evaluate(state.prep, etdOverride != null ? { ...settings, etdOverride } : settings);
@@ -117,7 +121,7 @@ function analyzeAndRender() {
 /* ---------- 렌더링 ---------- */
 const STATUS_KO = { relevant: '관련', review: '검토', excluded: '제외' };
 const TABS = [
-  ['route', '경로·FIR'], ['airport', '출발·도착·교체'], ['alt', 'REFILE·ERA'], ['excluded', '제외됨'], ['all', '전체'], ['rte', '항로 대조'], ['mel', 'MEL/CDL'], ['init', 'INIT'], ['fuel', 'FUEL & LOAD'], ['edto', 'EDTO'],
+  ['route', '경로·FIR'], ['airport', '출발·도착·교체'], ['alt', 'REFILE·ERA'], ['excluded', '제외됨'], ['all', '전체'], ['rte', '항로 대조'], ['mel', 'MEL/CDL'], ['init', 'INIT'], ['fuel', 'FUEL & LOAD'], ['edto', 'EDTO'], ['refile', 'REFILE 연료'],
 ];
 function tabOfRaw(n) {
   if (n.sect === 'FIR' || n.sect === 'ENR') return 'route';
@@ -148,10 +152,13 @@ function render() {
   tabN.mel = !mel || !mel.ok ? '?' : mel.items.length;
   const ed = state.ed, hasEd = !!(ed && ed.isEdto);
   tabN.edto = !hasEd ? '' : !ed.ok ? '?' : ed.checks.some(c => c.st === 'bad') ? '✗' : ed.warnings.length || ed.checks.some(c => c.st === 'chk') ? '확인' : ed.etps.length ? `ETP${ed.etps.length}` : '✓';
-  const tabs = TABS.filter(([k]) => k !== 'edto' || hasEd); // EDTO 탭은 EDTO 비행일 때만
-  if (state.tab === 'edto' && !hasEd) state.tab = 'route';
-  const isFuel = state.tab === 'fuel', isInit = state.tab === 'init', isMel = state.tab === 'mel', isEd = state.tab === 'edto';
-  const isRc = state.tab === 'rte' || isFuel || isInit || isMel || isEd;
+  const rf = state.rf, hasRf = !!(rf && rf.isRefile);
+  tabN.refile = !hasRf ? '' : !rf.ok ? '?' : (rf.rfPlan ?? 0) < (rf.R.rqrd?.f ?? 0) ? '✗' : rf.warnings.length || rf.checks.some(c => c.st !== 'ok') ? '확인' : '✓';
+  // 비행 종류 탭: EDTO 비행이면 EDTO, REFILE 비행이면 REFILE 연료 (해당 없으면 숨김)
+  const tabs = TABS.filter(([k]) => (k !== 'edto' || hasEd) && (k !== 'refile' || hasRf));
+  if ((state.tab === 'edto' && !hasEd) || (state.tab === 'refile' && !hasRf)) state.tab = 'route';
+  const isFuel = state.tab === 'fuel', isInit = state.tab === 'init', isMel = state.tab === 'mel', isEd = state.tab === 'edto', isRf = state.tab === 'refile';
+  const isRc = state.tab === 'rte' || isFuel || isInit || isMel || isEd || isRf;
 
   const fir = Object.entries(ctx.firWin).filter(([k]) => (ofp.eet || []).some(e => e.fir === k) || k === (ofp.pkgFirs || [])[0])
     .sort((a, b) => a[1][0][0] - b[1][0][0]);
@@ -181,11 +188,15 @@ function render() {
     <input id="q" type="search" placeholder="검색 (ID·지점·단어)" value="${esc(state.q)}" style="width:190px">
     <div class="seg" id="view">${[['both', '해석+원문'], ['ko', '해석'], ['raw', '원문']].map(([k, l]) => `<button data-v="${k}" class="${state.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`}
   </div>`;
-  h += isEd ? `<div id="edto">${renderEdto(ed, ctx, notams)}</div>` : isMel ? `<div id="mel">${renderMel(mel)}</div>` : isInit ? `<div id="init">${renderInit(it, ofp)}</div>` : isFuel ? `<div id="fuel">${renderFuel(fu, ofp, ctx)}</div>` : isRc ? `<div id="rc">${renderRouteCheck(rc)}</div>` : `<div id="list">${renderList()}</div>`;
+  h += isRf ? `<div id="refile">${renderRefile(rf, ctx, notams, state.rfFob)}</div>` : isEd ? `<div id="edto">${renderEdto(ed, ctx, notams)}</div>` : isMel ? `<div id="mel">${renderMel(mel)}</div>` : isInit ? `<div id="init">${renderInit(it, ofp)}</div>` : isFuel ? `<div id="fuel">${renderFuel(fu, ofp, ctx)}</div>` : isRc ? `<div id="rc">${renderRouteCheck(rc)}</div>` : `<div id="list">${renderList()}</div>`;
   h += `<p class="note noprint" style="margin-top:20px">규칙 기반 자동 분류·해석입니다. 공식 브리핑을 대신하지 않으며, '검토'·'제외' 항목도 최종 확인은 원문으로 하세요. · v${APP_VERSION}/${CORE_VERSION}</p>`;
   el.innerHTML = h;
 
   el.querySelector('#tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.tab = b.dataset.t; render(); };
+  if (isRf) { // FOB 입력: 판정 줄만 다시 그림 (입력 포커스 유지)
+    const inp = el.querySelector('#rfFob');
+    if (inp) inp.oninput = () => { state.rfFob = inp.value; const tmp = document.createElement('div'); tmp.innerHTML = renderRefile(rf, ctx, notams, state.rfFob); el.querySelector('#rfVerdict').innerHTML = tmp.querySelector('#rfVerdict').innerHTML; };
+  }
   if (isRc) return;
   el.querySelector('#view').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; store.set('nf.view', state.view); render(); };
   const q = el.querySelector('#q');
