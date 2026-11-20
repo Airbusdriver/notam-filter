@@ -224,7 +224,7 @@ function render() {
     const inp = el.querySelector('#rfFob');
     if (inp) inp.oninput = () => { state.rfFob = inp.value; const tmp = document.createElement('div'); tmp.innerHTML = renderRefile(rf, ctx, notams, state.rfFob); el.querySelector('#rfVerdict').innerHTML = tmp.querySelector('#rfVerdict').innerHTML; };
   }
-  if (isRc) return;
+  // 이륙시간 입력은 모든 탭에서 동작 (SR·EDTO·REFILE 탭 ETO도 다시 계산)
   const tko = el.querySelector('#tko');
   if (tko) {
     const apply = v => { state.tko = v; store.set('nf.tko', { k: tkoKey(ofp), v }); analyzeAndRender(); };
@@ -233,6 +233,7 @@ function render() {
     tko.onkeydown = e => { if (e.key === 'Enter') tko.blur(); };
     const clr = el.querySelector('#tkoClr'); if (clr) clr.onclick = () => apply('');
   }
+  if (isRc) return;
   el.querySelector('#view').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; store.set('nf.view', state.view); render(); };
   const q = el.querySelector('#q');
   q.oninput = () => { state.q = q.value; refreshList(); };

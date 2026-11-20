@@ -153,7 +153,10 @@ OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL
 - v1.8.0 MEL/CDL:
   - AAR541: MEL 3건 21-59-01A · 30-81-01A · 50-20-01A (3건 모두 끝 잘림), 노트 CHECKED ABOVE MEL, HL7771
   - AAR204: CDL 2건 27-21(잘림) · 27-23, 노트 CHECKED ABOVE CDL, HL8360
-- v1.12.0 SR (AAR541 navlog 발췌로 만든 PDF로 검증, 전체 OFP PDF 검증은 아직): 최대 SR 7 AGAVO→IKEKA. SR 5 이상 3구간 — AGAVO→IKEKA(7) · SEBLI→HCH(WEH 6 · FZ 6 · TEKAM 5 · HCH 5) · PIGAL→TIRBA(5). REFILE navlog 제외, "21020 000" 바람 표기 처리
+- v1.12.0 SR (원본 PDF로 검증, pdftotext 독립 추출과 SR 5 이상 값 일치):
+  - AAR541: 154구간, 최대 SR 7 AGAVO→IKEKA. 5 이상 3구간 — AGAVO→IKEKA(7) · SEBLI→HCH(WEH 6 · FZ 6 · TEKAM 5 · HCH 5) · PIGAL→TIRBA(5). 이륙 0610 입력 시 IKEKA ETO 0640Z
+  - AAR204: 58구간, 최대 SR 7 (TATAM · BEKEN · ADNAP · 40E80 · ETP2 · 39N60). 5 이상 6구간 — LESBU→BUSKO · IGOBI→TATAM · SDE→BEKEN · OATIS→EMRON · 40E70→40E80 · 40N70→39N60
+  - 이륙시간 입력칸이 NOTAM 이외 탭(항로 대조~SR)에서 동작하지 않던 문제 수정 (v1.12.0)
 - v1.11.0 이륙시간 입력 (AAR541): 기본 ETA 1529Z. 이륙 0610 입력 시 ETA 1914Z · RKRR 0610Z · ZSHA 0634Z…, FIR NOTAM 관련 8→6. 잘못된 값(2575)은 빨간 칸, 계산 미반영.
 
 ## 앞으로 할 것
