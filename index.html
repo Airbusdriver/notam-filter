@@ -43,6 +43,11 @@ main{max-width:1280px;margin:0 auto;padding:14px 16px calc(env(safe-area-inset-b
 .drop p{color:var(--muted);margin:6px 0}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .flt{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:baseline}
+.flt .tkobox{display:inline-flex;align-items:baseline;gap:3px}
+input.tko{width:62px;min-height:30px;padding:2px 6px;font:600 15px var(--mono);text-align:center;border:1.5px dashed var(--line)}
+input.tko.set{border:1.5px solid var(--acc);color:var(--acc)}
+input.tko.bad{border-color:#d33;color:#d33}
+input.tko::placeholder{color:var(--muted);opacity:.8;font-weight:400}
 .flt .ftype{align-self:center;font-size:13px;font-weight:700;letter-spacing:.3px;border:1.5px solid var(--acc);color:var(--acc);border-radius:7px;padding:1px 9px;margin-left:-12px}
 .flt .ftype+.ftype{margin-left:-16px}
 .flt .big{font-size:22px;font-weight:700;letter-spacing:-.3px}
@@ -288,9 +293,7 @@ html.dark .rf-v.bad,html.night .rf-v.bad{background:#3a1512;color:#ff8a7a}
     <label for="sAfter">시간 여유: 통과 후 / 지연 (분)</label><input id="sAfter" type="number" min="0" max="720" step="15" style="width:90px">
     <div class="h">예정 통과 시각 앞뒤로 이만큼 넓혀서 NOTAM 활성 여부를 봅니다.</div>
     <label for="sAlt">고도 여유 (ft)</label><input id="sAlt" type="number" min="0" max="10000" step="500" style="width:90px">
-    <label for="sEtd">출발시각 변경 (UTC, HHMM)</label><input id="sEtd" type="text" inputmode="numeric" placeholder="OFP 값" style="width:90px">
-    <div class="h">비워두면 OFP의 ETD를 씁니다. 지연 시 실제 이륙 예상 시각을 넣으세요.</div>
-  </div>
+      </div>
   <h3 style="margin:18px 0 8px">표시</h3>
   <div class="frm">
     <label for="sDec">영문 디코딩을 펼쳐서 보기</label><input id="sDec" type="checkbox" style="width:22px;height:22px">

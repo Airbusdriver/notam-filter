@@ -18,7 +18,7 @@ import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.11.0';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -63,7 +63,7 @@ drop.addEventListener('dragover', e => { e.preventDefault(); });
 drop.addEventListener('drop', e => { e.preventDefault(); const f = [...e.dataTransfer.files].filter(x => /pdf$/i.test(x.name)); if (f.length) loadFiles(f); });
 
 const last = store.get('nf.last', null);
-if (last && last.lines) { const b = $('#btnLast'); b.hidden = false; b.textContent = `마지막 OFP 다시 열기 (${last.name})`; b.onclick = () => { state.lines = last.lines; state.prep = null; state.name = last.name; analyzeAndRender(); }; }
+if (last && last.lines) { const b = $('#btnLast'); b.hidden = false; b.textContent = `마지막 OFP 다시 열기 (${last.name})`; b.onclick = () => { state.lines = last.lines; state.prep = null; state.tko = null; state.name = last.name; analyzeAndRender(); }; }
 
 async function loadFiles(files) {
   const st = $('#status'), pg = $('#prog'), bar = pg.querySelector('i');
@@ -80,7 +80,7 @@ async function loadFiles(files) {
     // OFP가 먼저, NOTAM 패키지가 뒤에 오도록 파일 순서 정리
     const hasPkg = k => all.some(l => l.f === k && /^NOTAM PACKAGE \d/.test(l.t));
     if (files.length > 1) { const order = files.map((_, k) => k).sort((a, b) => hasPkg(a) - hasPkg(b)); all = order.flatMap(k => all.filter(l => l.f === k)); }
-    state.lines = all.map(({ t, p }) => ({ t, p })); state.prep = null;
+    state.lines = all.map(({ t, p }) => ({ t, p })); state.prep = null; state.tko = null;
     state.name = files.map(f => f.name).join(' + ');
     if (!store.set('nf.last', { name: state.name, lines: state.lines, at: Date.now() })) console.warn('저장 공간 부족 — 마지막 OFP 저장 생략');
     state.readMs = Math.round(performance.now() - t0);
@@ -91,9 +91,12 @@ async function loadFiles(files) {
 }
 
 /* ---------- 분석 ---------- */
+// 이륙시간(UTC HHMM): 입력이 없으면 OFP 계획 ETD를 그대로 사용
+const tkoKey = ofp => `${ofp.flight || ''}|${ofp.date ?? ''}`;
+function validHHMM(v) { return /^\d{4}$/.test(v) && +v.slice(0, 2) < 24 && +v.slice(2) < 60; }
 function parseEtd(ofp) {
-  const v = (settings.etdHHMM || '').trim();
-  if (!/^\d{4}$/.test(v) || ofp.date == null) return undefined;
+  const v = (state.tko || '').trim();
+  if (!validHHMM(v) || ofp.date == null) return undefined;
   let t = ofp.date + (+v.slice(0, 2)) * 3600000 + (+v.slice(2)) * 60000;
   if (ofp.etd != null && t < ofp.etd - 12 * 3600000) t += 86400000;
   return t;
@@ -111,6 +114,7 @@ function analyzeAndRender() {
     try { state.rf = parseRefile(T, state.prep.ofp); } catch (e) { console.error(e); state.rf = null; }
     state.rfFob = '';
   }
+  if (state.tko == null) { const s = store.get('nf.tko', {}); state.tko = s.k === tkoKey(state.prep.ofp) ? s.v : ''; }
   const etdOverride = parseEtd(state.prep.ofp);
   state.R = evaluate(state.prep, etdOverride != null ? { ...settings, etdOverride } : settings);
   state.ms = Math.round(performance.now() - t0);
@@ -162,7 +166,8 @@ function render() {
 
   const fir = Object.entries(ctx.firWin).filter(([k]) => (ofp.eet || []).some(e => e.fir === k) || k === (ofp.pkgFirs || [])[0])
     .sort((a, b) => a[1][0][0] - b[1][0][0]);
-  const etdLbl = settings.etdHHMM ? `<b>${fmtZ(ctx.etd, false)}</b> <span class="chip">변경됨</span>` : `<b>${fmtZ(ctx.etd, false)}</b>`;
+  const tkoSet = validHHMM(state.tko || '');
+  const plannedZ = ofp.etd != null ? fmtZ(ofp.etd, false).slice(0, 4) : '';
   let h = '';
   for (const w of ofp.warnings || []) h += `<div class="warn">${esc(w)}</div>`;
   if (!notams.length) h += `<div class="warn">NOTAM 패키지를 찾지 못했습니다. NOTAM이 들어 있는 PDF도 함께 선택하세요.</div>`;
@@ -171,8 +176,10 @@ function render() {
       <span class="big">${esc(ofp.flight || '—')} ${esc(ofp.dep || '')} → ${esc(ofp.dest || '')}</span>
       ${(ofp.flightType || []).map(t => `<span class="ftype">${esc(t)}</span>`).join('')}
       <span class="kv">날짜 <b>${ofp.date != null ? fmtZ(ofp.date).slice(0, 5) + String(new Date(ofp.date).getUTCFullYear()).slice(2) : '—'}</b></span>
-      <span class="kv">ETD ${etdLbl}</span>
-      <span class="kv">ETA <b>${fmtZ(ctx.eta, false)}</b></span>
+      <span class="kv">ETD <b>${ofp.etd != null ? fmtZ(ofp.etd, false) : '—'}</b></span>
+      <span class="kv tkobox noprint-in">이륙 <input id="tko" class="tko${tkoSet ? ' set' : ''}" type="text" inputmode="numeric" maxlength="4" autocomplete="off"
+        placeholder="${plannedZ}" value="${esc(state.tko || '')}" aria-label="이륙시간 UTC HHMM"><b>Z</b>${tkoSet ? ' <button id="tkoClr" class="mini" title="계획 ETD로 되돌리기">계획으로</button>' : ''}</span>
+      <span class="kv">ETA <b>${fmtZ(ctx.eta, false)}</b>${tkoSet ? ' <span class="chip">이륙 기준</span>' : ''}</span>
       <span class="kv">ALTN <b>${esc(ofp.altn || '—')}</b></span>
       <span class="kv">CFP PLAN <b>${esc(ofp.cfpPlan || '—')}</b></span>
       <span class="kv">비행시간 <b>${ofp.flightMin != null ? `${Math.floor(ofp.flightMin / 60)}:${String(ofp.flightMin % 60).padStart(2, '0')}` : '—'}</b></span>
@@ -198,6 +205,14 @@ function render() {
     if (inp) inp.oninput = () => { state.rfFob = inp.value; const tmp = document.createElement('div'); tmp.innerHTML = renderRefile(rf, ctx, notams, state.rfFob); el.querySelector('#rfVerdict').innerHTML = tmp.querySelector('#rfVerdict').innerHTML; };
   }
   if (isRc) return;
+  const tko = el.querySelector('#tko');
+  if (tko) {
+    const apply = v => { state.tko = v; store.set('nf.tko', { k: tkoKey(ofp), v }); analyzeAndRender(); };
+    tko.oninput = () => { const v = tko.value.replace(/\D/g, '').slice(0, 4); tko.value = v; tko.classList.toggle('bad', v.length === 4 && !validHHMM(v));
+      if ((v.length === 4 && validHHMM(v)) || (v === '' && state.tko)) apply(v); };
+    tko.onkeydown = e => { if (e.key === 'Enter') tko.blur(); };
+    const clr = el.querySelector('#tkoClr'); if (clr) clr.onclick = () => apply('');
+  }
   el.querySelector('#view').onclick = e => { const b = e.target.closest('button'); if (!b) return; state.view = b.dataset.v; store.set('nf.view', state.view); render(); };
   const q = el.querySelector('#q');
   q.oninput = () => { state.q = q.value; refreshList(); };
@@ -321,7 +336,7 @@ async function importTranslations(files) {
 const dlg = $('#dlg');
 function openSettings() {
   $('#sBuf').value = settings.bufferNM; $('#sBefore').value = settings.before; $('#sAfter').value = settings.after;
-  $('#sAlt').value = settings.altMargin; $('#sEtd').value = settings.etdHHMM || '';
+  $('#sAlt').value = settings.altMargin;
   $('#sKoMode').value = settings.koMode || 'auto';
   $('#sDec').checked = !!state.decOpen;
   $('#trCount').textContent = `저장된 번역 ${trStore.count()}건`;
@@ -336,11 +351,10 @@ $('#sClose').onclick = () => {
   const num = (id, d) => { const v = parseFloat($(id).value); return isFinite(v) && v >= 0 ? v : d; };
   settings.bufferNM = num('#sBuf', DEFAULTS.bufferNM); settings.before = num('#sBefore', DEFAULTS.before);
   settings.after = num('#sAfter', DEFAULTS.after); settings.altMargin = num('#sAlt', DEFAULTS.altMargin);
-  const e = $('#sEtd').value.replace(/[^0-9]/g, ''); settings.etdHHMM = /^\d{4}$/.test(e) ? e : '';
   settings.koMode = $('#sKoMode').value; delete settings.aiKey; delete settings.aiModel;
   for (const n of state.R?.notams || []) n._L = null;
   state.decOpen = $('#sDec').checked; store.set('nf.decOpen', state.decOpen);
-  const { etdHHMM, ...persist } = settings; store.set('nf.settings', persist); // 출발시각 변경은 이번 비행에만
+  delete settings.etdHHMM; store.set('nf.settings', settings);
   dlg.close(); if (state.lines) analyzeAndRender();
 };
 $('#btnPrint').onclick = () => print();
