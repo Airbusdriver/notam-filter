@@ -1,4 +1,4 @@
-# CLAUDE.md — OFP 추출 / NOTAM 경로 필터
+# CLAUDE.md — OFP SUMMARY (저장소 이름: notam-filter)
 
 이 파일은 Claude Code가 이 저장소에서 작업할 때마다 먼저 읽는 지침이다.
 아래 내용은 claude.ai 프로젝트 "OFP 추출"에서 사용자와 정한 사항을 옮겨 적은 것이다.
@@ -20,7 +20,7 @@
 ## 저장소와 배포
 - 저장소: https://github.com/Airbusdriver/notam-filter (main 브랜치 루트)
 - 웹 주소: https://airbusdriver.github.io/notam-filter/
-- 현재 버전: v1.11.1 (2026-11-20) — 오프라인 열기 보강(페이지 열기 요청 index.html 대체, 실제 오프라인 준비 상태 표시)
+- 현재 버전: v1.11.2 (2026-11-20) — 앱 이름을 "OFP SUMMARY"로 변경 (저장소·주소는 notam-filter 그대로)
 - 오프라인 주의: 주소는 반드시 끝에 / 를 붙인 https://airbusdriver.github.io/notam-filter/ 로 연다. / 없는 주소는 서비스워커 범위 밖이라 오프라인에서 열리지 않는다(GitHub 리디렉트가 온라인에서만 동작).
 - **반영 방식(사용자 결정):** 앱 동작에 영향이 없는 변경(CLAUDE.md·README·.gitignore 등 문서·설정)은 PR 없이 main에 바로 올린다. 앱 코드(HTML·JS·sw.js 등)를 바꾸는 변경은 브랜치에서 PR을 열어 사용자 확인을 받은 뒤 합친다.
 - **업데이트 규칙:** 파일을 수정하면 `sw.js`의 `VERSION` 값을 올려야 설치된 홈 화면 앱이 새 버전을 받는다. 새 파일은 `sw.js`의 `FILES`에도 추가한다.
