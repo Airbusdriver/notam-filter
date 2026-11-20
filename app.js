@@ -18,7 +18,7 @@ import { literalKO } from './literal.js';
 import { trStore } from './trfile.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('./pdf.worker.min.mjs', import.meta.url).href;
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.11.1';
 const $ = s => document.querySelector(s);
 
 /* ---------- 저장소 (실패해도 동작) ---------- */
@@ -30,10 +30,25 @@ let settings = { ...DEFAULTS, ...store.get('nf.settings', {}) };
 let state = { decOpen: store.get('nf.decOpen', true), lines: null, prep: null, name: '', R: null, tab: 'route', view: store.get('nf.view', 'both'), q: '', open: new Set() };
 
 /* ---------- 오프라인 / 서비스워커 ---------- */
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('./sw.js').then(() => { $('#offline').textContent = '오프라인 사용 가능'; }).catch(() => {});
+// 상태 표시: '오프라인 사용 가능'은 이 페이지가 실제로 서비스워커 제어 아래에 있고 캐시에 index.html이 있을 때만 표시
+// (브라우저·홈 화면 앱마다 캐시가 따로이므로, Safari·Chrome 각각 온라인에서 한 번 열어 이 표시를 확인해야 함)
+let swState = '';
+const swMsg = () => { $('#offline').textContent = (navigator.onLine ? '' : '오프라인 · ') + swState; };
+async function checkOffline() {
+  if (!('serviceWorker' in navigator)) { swState = '이 브라우저는 오프라인 저장 미지원'; return swMsg(); }
+  if (location.protocol !== 'https:') return;
+  navigator.serviceWorker.register('./sw.js').catch(() => {}); // 오프라인에서는 업데이트 확인이 실패해도 무시
+  try {
+    const ok = !!navigator.serviceWorker.controller && !!(await caches.match('./index.html'));
+    swState = ok ? '오프라인 사용 가능' : '오프라인 준비 중 — 온라인에서 한 번 새로고침';
+  } catch { swState = '오프라인 저장 실패'; }
+  swMsg();
 }
-const updOnline = () => { if (!navigator.onLine) $('#offline').textContent = '오프라인'; };
+checkOffline();
+navigator.serviceWorker?.addEventListener('controllerchange', checkOffline);
+// 저장 공간이 부족할 때 브라우저가 캐시를 지우지 않도록 요청 (지원하는 브라우저만)
+try { navigator.storage?.persist?.(); } catch {}
+const updOnline = () => swMsg();
 addEventListener('online', updOnline); addEventListener('offline', updOnline); updOnline();
 // 화면 모드: 자동(기기 설정) / 라이트 / 다크 / 야간(적색)
 const THEME_BG = { light: '#f4f5f7', dark: '#0f1720', night: '#000000' };
