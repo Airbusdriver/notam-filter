@@ -21,6 +21,7 @@
 - 저장소: https://github.com/Airbusdriver/notam-filter (main 브랜치 루트)
 - 웹 주소: https://airbusdriver.github.io/notam-filter/
 - 현재 버전: v1.11.0 (2026-11-20) — 메인 정보줄 이륙시간 입력칸
+- **반영 방식(사용자 결정):** 앱 동작에 영향이 없는 변경(CLAUDE.md·README·.gitignore 등 문서·설정)은 PR 없이 main에 바로 올린다. 앱 코드(HTML·JS·sw.js 등)를 바꾸는 변경은 브랜치에서 PR을 열어 사용자 확인을 받은 뒤 합친다.
 - **업데이트 규칙:** 파일을 수정하면 `sw.js`의 `VERSION` 값을 올려야 설치된 홈 화면 앱이 새 버전을 받는다. 새 파일은 `sw.js`의 `FILES`에도 추가한다.
 
 ## 사용자가 정한 원칙
