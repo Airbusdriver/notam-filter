@@ -1,6 +1,6 @@
 {
-  "name": "NOTAM 경로 필터",
-  "short_name": "NOTAM 필터",
+  "name": "OFP SUMMARY",
+  "short_name": "OFP SUMMARY",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
