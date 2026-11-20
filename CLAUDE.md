@@ -9,9 +9,11 @@
 - OFP 요약 내용을 FMS에 입력하기 좋은 형태로 정리한다.
 
 ## 사용 환경 (중요)
-- **주 사용 기기: 회사 EFB로 쓰는 iPad (Safari, 홈 화면 PWA).**
+- **주 사용 기기: 회사 EFB로 쓰는 iPad. 브라우저는 Safari와 Chrome을 모두 쓴다 (홈 화면 PWA 포함).**
+- iPad의 Chrome도 Safari와 같은 WebKit 엔진이므로, 새 기능은 Safari와 Chrome(iPad) 양쪽에서 확인한다. Chrome 데스크톱 전용 API(File System Access API 등)는 쓰지 않는다.
+- 저장 데이터(번역 파일, 설정, 이륙시간 입력값)는 브라우저·홈 화면 앱마다 따로 저장되어 서로 공유되지 않는다.
 - 기내에서는 네트워크가 없을 수 있으므로 모든 기능은 **오프라인으로, 기기 안에서만** 동작해야 한다. 외부 서버나 API로 데이터를 보내지 않는다.
-- 회사가 관리하는 기기라서 설치·저장소·파일 접근에 MDM 제한이 걸려 있을 수 있다. 새 기능을 만들 때는 Safari 기본 기능(File input, localStorage/IndexedDB, Service Worker)만 쓰고, 별도 앱 설치나 프로필이 필요한 방식은 쓰지 않는다.
+- 회사가 관리하는 기기라서 설치·저장소·파일 접근에 MDM 제한이 걸려 있을 수 있다. 새 기능을 만들 때는 iPad 브라우저 기본 기능(File input, localStorage/IndexedDB, Service Worker)만 쓰고, 별도 앱 설치나 프로필이 필요한 방식은 쓰지 않는다.
 - 화면은 iPad 터치 조작 기준(손가락으로 누르기 좋은 버튼 크기, 가로/세로 모두)으로 만든다. 야간(적색) 모드를 지원한다.
 - 회사 OFP 원본(PDF·txt)은 **저장소에 커밋하지 않는다** (`.gitignore`로 제외, 로컬에만 보관). 공개 저장소(GitHub Pages)이기 때문이다.
 
@@ -29,7 +31,7 @@
 - FMS 관련 탭은 **FMS 초기 셋업 전용**이다. 로드시트 입력이나 재계산은 고려하지 않는다.
 
 ## 하는 일
-OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL 항로, navlog 지점, 좌표 구역, FIR 진입시각(EET), 통과 고도, D) 운용시간으로 NOTAM을 관련 / 검토 / 제외로 나누고, 원문과 해석을 함께 보여준다. 처리는 모두 기기 안(iPad Safari)에서 오프라인으로 한다.
+OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL 항로, navlog 지점, 좌표 구역, FIR 진입시각(EET), 통과 고도, D) 운용시간으로 NOTAM을 관련 / 검토 / 제외로 나누고, 원문과 해석을 함께 보여준다. 처리는 모두 기기 안(iPad Safari·Chrome)에서 오프라인으로 한다.
 
 ### 탭 순서
 경로·FIR / 출발·도착·교체 / REFILE·ERA / 제외됨 / 전체 / 항로 대조 / MEL/CDL / INIT / FUEL & LOAD
