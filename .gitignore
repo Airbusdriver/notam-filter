@@ -1,0 +1,12 @@
+# 회사 OFP 원본과 OFP 내용이 담긴 파일은 공개 저장소에 올리지 않는다
+*.pdf
+*OFP*.txt
+ofp-samples/
+samples/
+local/
+to-translate.json
+*_ko.json
+
+# 기타
+.DS_Store
+node_modules/
