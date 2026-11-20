@@ -147,4 +147,6 @@ OFP PDF(아시아나 Jeppesen Dataplan + NOTAM PACKAGE 1~3 형식)를 열면 FPL
 
 ## 앞으로 할 것
 - PERF(T.O PERF) 입력용 요약 화면
-- 친한 부기장이 GitHub에 만든 FMS 셋업용 HTML 페이지를 가져와 수정해서 쓰는 것 (저장소 주소 확인 필요)
+
+## 하지 않기로 한 것
+- 부기장이 만든 FMS 셋업용 HTML 페이지는 가져오지 않는다. FMS 입력은 이 앱의 INIT 탭과 FUEL & LOAD 탭을 보고 한다 (사용자 결정, 2026-11-20).
